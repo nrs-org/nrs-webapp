@@ -47,12 +47,12 @@ pub fn error_toast(error: &ClientError) -> impl Renderable {
 pub fn error_page(error: &ClientError, props: &DocumentProps) -> impl Renderable {
     rsx! {
         <Document props=(DocumentProps {error: true, ..*props})>
-            <main class="bg-base-200 flex flex-col items-center justify-center">
+            <section class="bg-base-200 flex flex-col items-center justify-center">
                 <Icon class="size-30 text-error mb-2" name=(ExclamationCircle) variant=(Solid) .. />
                 <h1 class="font-bold text-5xl mb-8">(error.title)</h1>
                 <p class="text-base-content/80">(error.description)</p>
                 <button onclick={"history.back()"} class="btn btn-primary mt-8">("Go Back")</button>
-            </main>
+            </section>
         </Document>
     }
 }

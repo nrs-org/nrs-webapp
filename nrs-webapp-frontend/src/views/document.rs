@@ -47,8 +47,10 @@ pub fn document<R: Renderable>(props: &DocumentProps, children: &R) -> impl Rend
                     }
                 ></div>
                 <div class="min-h-[100dvh] grid grid-rows-[auto_1fr_auto]">
-                    <Navbar />
-                    (children)
+                    <Navbar logged_in=(props.logged_in) />
+                    <main id="page" class="contents">
+                        (children)
+                    </main>
                     <Footer />
                 </div>
             </body>
