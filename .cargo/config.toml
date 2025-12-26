@@ -1,0 +1,11 @@
+[env]
+RUST_LOG = "nrs_webapp=debug"
+SERVICE_DB_URL = "postgres://nrs_webapp_user:dev_only_pwd@localhost:3622/nrs_webapp_dev"
+STATIC_SERVE_DIR = "nrs-webapp-frontend/static/serve"
+
+# app secrets, should be stored securely in prod
+SERVICE_PASSWORD_PEPPER = "jIYb9KCTzZpdqbKM_e9DwcJzCefzvnAUGZzD_WH029OXbyMnn5nyUWerd_NPWrVNKKwDM6rEzmipNuFNdJ8vKej1XEb5dD2NzKwSWTNqiQKgRph6rVABcIrybPAjC31wN-7rfpQYoB1oZyYb5wl1meNgDzwjpLfpBL90R89BGx8="
+SERVICE_JWT_SECRET = "ub3lweHTzpWiVZyVrskQjcsRqRlNTFGbHMaTYec97AIFJ2wg05FYyXVjI9as9MqE19Ur5ztCWfZDPMjwxycZZlD48SeMbzH0ppxJSLgxCYTotPO79Tf1lH7IkM27ujBiiHS_MUMgFA9zKdDC9bYhHEXug6XFt-2_ZkrmNEhU_Wo="
+SERVICE_JWT_EXPIRY_SECS = "1800"
+
+VGMDB_API_ENDPOINT="http://localhost:2999"
