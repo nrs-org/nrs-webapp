@@ -3,6 +3,7 @@ command = ["cargo", "run", "--bin", "nrs-webapp"]
 background = false
 on_change_strategy = "kill_then_restart"
 need_stdout = true
+watch = ["nrs-webapp-frontend/"]
 
 [jobs.build-core-wasm]
 command = [

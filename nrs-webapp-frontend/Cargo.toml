@@ -1,0 +1,13 @@
+[package]
+name = "nrs-webapp-frontend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.8"
+axum-htmx = "0.8.1"
+heroicons = "0.2.0"
+hypertext = { version = "0.12.1", features = ["alpine", "axum", "htmx"] }
+nrs-webapp-core = { version = "0.1.0", path = "../nrs-webapp-core" }
+sqlbindable = { version = "0.1.0", path = "../sqlbindable" }
+sqlx = "0.8.6"
