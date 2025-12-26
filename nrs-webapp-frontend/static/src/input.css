@@ -3,3 +3,17 @@
 @plugin "daisyui" {
 	themes: winter --default, night --prefersdark;
 }
+
+@theme {
+	--animate-toast-progress: toast-progress 4s linear forwards;
+
+	@keyframes toast-progress {
+		0% {
+			width: 100%;
+		}
+
+		100% {
+			width: 0;
+		}
+	}
+}

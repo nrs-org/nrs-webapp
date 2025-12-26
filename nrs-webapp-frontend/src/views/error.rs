@@ -16,28 +16,29 @@ pub struct ClientError {
 
 pub fn error_toast(error: &ClientError) -> impl Renderable {
     let fade_out_duration_ms = 300;
+    // NOTE: keep in sync with CSS animation duration defined in input.css
+    let toast_autoclose_duration_ms = 4000;
     rsx! {
         <div hx-swap-oob="afterbegin:#toast-root">
-            <div role={"alert alert-error alert-vertical sm:alert-horizontal pointer-events-auto transition-opacity duration-"(fade_out_duration_ms)}>
-                <Icon name=(ExclamationCircle) variant=(Solid) .. />
+            <div class={"alert alert-error relative overflow-hidden alert-vertical sm:alert-horizontal pointer-events-auto transition-opacity border-none duration-"(fade_out_duration_ms)} hx-on:htmx:after:process={"setTimeout(() => this.querySelector('.close-button')?.click(), "(toast_autoclose_duration_ms)")"}>
+                <Icon class="size-6" name=(ExclamationCircle) variant=(Solid) .. />
 
                 <div>
-                    <h3>(error.title)</h3>
-                    <p>(error.description)</p>
+                    <h3 class="font-bold">(error.title)</h3>
+                    <p class="text-xs">(error.description)</p>
                 </div>
 
 
-                <button class="btn btn-ghost" onclick={"
+                <button class="btn btn-ghost close-button" onclick={"
                     const a = this.closest('.alert');
                     a.classList.add('opacity-0');
                     setTimeout(() => a.remove(), "(fade_out_duration_ms)");
                 "}>
-                    <Icon name=(XMark) variant=(Solid) .. />
+                    <Icon class="size-6" name=(XMark) variant=(Solid) .. />
                 </button>
 
-                <div class="absolute bottom-0 left-0 h-1 bg-white/40">
-                    <div class="h-full bg-white"
-                         style="animation: toast-progress 4s linear forwards"></div>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/40">
+                    <div class="h-full bg-white/80 animate-toast-progress"></div>
                 </div>
             </div>
         </div>
