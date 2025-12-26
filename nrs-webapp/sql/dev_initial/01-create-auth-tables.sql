@@ -2,10 +2,10 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE IF NOT EXISTS app_user (
                 id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-                name TEXT,
+                username TEXT NOT NULL,
                 email TEXT NOT NULL,
                 email_verified_at TIMESTAMPTZ,
-                password_hash TEXT,
+                password_hash TEXT NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 UNIQUE(email),

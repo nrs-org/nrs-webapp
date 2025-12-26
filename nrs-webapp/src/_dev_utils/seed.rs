@@ -1,5 +1,115 @@
-use crate::_dev_utils::Db;
+use std::sync::Mutex;
+
+use nrs_webapp_core::{data::entry::types::idtype::EntryType, legacy_json::Bulk};
+use sea_query::Expr;
+use sqlbindable::Fields;
+use sqlx::prelude::FromRow;
+
+use crate::{
+    _dev_utils::Db,
+    model::{
+        ModelManager,
+        entity::{DbBmc, DbBmcWithPkey, ListPayload},
+        entry::{EntryBmc, EntryForCreate},
+        user::{UserBmc, UserForCreate},
+    },
+};
 
 pub async fn seed_dev_db(db: &Db) {
     tracing::info!("{:<12} -- seed_dev_db()", "FOR-DEV-ONLY");
+
+    let mut mm = ModelManager::new()
+        .await
+        .expect("Failed to create ModelManager");
+
+    let test_user_id = create_test_user(&mut mm).await;
+    seed_entries(&mut mm, &test_user_id).await;
+}
+
+static TEST_USER_ID: Mutex<Option<String>> = Mutex::new(None);
+
+async fn create_test_user(mm: &mut ModelManager) -> String {
+    tracing::info!("{:<12} -- create_test_user()", "FOR-DEV-ONLY");
+
+    let username = "testuser".into();
+    let email = "testuser@nrs.dev".into();
+    let password_clear = "password123";
+
+    // TODO: implement argon2id password hashing
+    let password_hash = format!("hashed-{}", password_clear);
+
+    let id = UserBmc::create_dev_user(
+        mm,
+        UserForCreate {
+            username,
+            email,
+            password_hash,
+        },
+    )
+    .await
+    .expect("Unable to create test user");
+
+    tracing::info!(
+        "{:<12} -- Created test user with ID: {}",
+        "FOR-DEV-ONLY",
+        id
+    );
+
+    TEST_USER_ID.lock().unwrap().replace(id.clone());
+
+    id
+}
+
+pub fn test_user_id() -> Option<String> {
+    TEST_USER_ID.lock().unwrap().clone()
+}
+
+async fn seed_entries(mm: &mut ModelManager, test_user_id: &str) {
+    tracing::info!("{:<12} -- seed_entries()", "FOR-DEV-ONLY");
+
+    let entries = include_str!("latest-pj-escape-bulk.json");
+    let Bulk {
+        entries, scores, ..
+    } = serde_json::from_str::<Bulk>(entries).expect("Unable to decode JSON");
+    let num_entries = entries.len();
+
+    let create_reqs = entries.into_iter().map(|(id, e)| EntryForCreate {
+        title: e
+            .meta
+            .get("DAH_entry_title")
+            .and_then(|v| v.as_str())
+            .unwrap_or("No title")
+            .into(),
+        entry_type: e
+            .meta
+            .get("DAH_entry_type")
+            .and_then(|v| v.as_str())
+            .and_then(EntryType::from_enum_string)
+            .unwrap_or_default(),
+        added_by: test_user_id.into(),
+        overall_score: scores
+            .get(&id)
+            .and_then(|r| {
+                r.meta
+                    .as_object()
+                    .and_then(|meta| meta.get("DAH_overall_score").and_then(|v| v.as_f64()))
+            })
+            .unwrap_or_default(),
+        id,
+    });
+
+    // inserting via transaction for performance (on my setup: 5-6s to sub-1)
+    let mut tx = mm.tx().await.expect("Unable to start transaction");
+    for create_req in create_reqs {
+        EntryBmc::create_entry(&mut tx, create_req)
+            .await
+            .expect("Unable to create entry");
+    }
+    tx.commit().await.expect("Unable to commit transaction");
+
+    tracing::info!(
+        "{:<12} -- Seeded {} entries into the database",
+        "FOR-DEV-ONLY",
+        num_entries
+    );
 }

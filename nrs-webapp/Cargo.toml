@@ -6,10 +6,17 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 axum = "0.8.7"
+base64 = "0.22.1"
 include_dir = "0.7.4"
+nrs-webapp-core = { version = "0.1.0", path = "../nrs-webapp-core", features = ["sql"] }
+sea-query = { version = "1.0.0-rc.22", default-features = false, features = ["backend-postgres", "with-chrono", "with-json", "with-time"] }
+sea-query-sqlx = { version = "=0.8.0-rc.10", default-features = false, features = ["sqlx-postgres", "with-chrono", "with-json", "with-time"] }
 serde = "1.0.228"
 serde_json = "1.0.145"
+sqlbindable = { version = "0.1.0", path = "../sqlbindable", features = ["sqlx-json"] }
 sqlx = { version = "0.8.6", default-features = false, features = ["postgres", "runtime-tokio"] }
+thiserror = "2.0.17"
+time = "0.3.44"
 tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.43"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
