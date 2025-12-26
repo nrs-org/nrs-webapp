@@ -13,7 +13,7 @@ use tower_http::services::ServeDir;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 pub use crate::error::{Error, Result};
-use crate::{config::AppConfig, middleware::mw_res_mapper, routes::router};
+use crate::{config::AppConfig, routes::router};
 
 #[cfg(debug_assertions)]
 mod _dev_utils;

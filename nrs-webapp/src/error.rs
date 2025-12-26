@@ -32,7 +32,11 @@ impl Error {
         }
     }
 
-    pub fn get_client_error(&self, title: Option<String>) -> (StatusCode, ClientError) {
+    pub fn get_client_error(
+        &self,
+        title: Option<String>,
+        req_uuid: String,
+    ) -> (StatusCode, ClientError) {
         let title = title.unwrap_or_else(|| "Error".into());
         let (status_code, description) = self.get_client_error_parts();
         (
@@ -40,6 +44,7 @@ impl Error {
             ClientError {
                 title,
                 description: description.into(),
+                req_uuid,
             },
         )
     }

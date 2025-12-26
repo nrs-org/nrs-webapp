@@ -6,12 +6,15 @@ use heroicons::{
     icon_variant::Solid,
 };
 use hypertext::prelude::*;
+use serde::Serialize;
 
 use crate::views::document::{Document, DocumentProps};
 
+#[derive(Debug, Serialize)]
 pub struct ClientError {
     pub title: String,
     pub description: String,
+    pub req_uuid: String,
 }
 
 pub fn error_toast(error: &ClientError) -> impl Renderable {
@@ -20,12 +23,16 @@ pub fn error_toast(error: &ClientError) -> impl Renderable {
     let toast_autoclose_duration_ms = 4000;
     rsx! {
         <div hx-swap-oob="afterbegin:#toast-root">
-            <div class={"alert alert-error relative overflow-hidden alert-vertical sm:alert-horizontal pointer-events-auto transition-opacity border-none duration-"(fade_out_duration_ms)} hx-on:htmx:after:process={"setTimeout(() => this.querySelector('.close-button')?.click(), "(toast_autoclose_duration_ms)")"}>
+            <div class={
+                "alert alert-error relative overflow-hidden alert-vertical sm:alert-horizontal
+                 pointer-events-auto transition-opacity border-none duration-"(fade_out_duration_ms)}
+                hx-on:htmx:after:process={"setTimeout(() => this.querySelector('.close-button')?.click(), "(toast_autoclose_duration_ms)")"}
+            >
                 <Icon class="size-6" name=(ExclamationCircle) variant=(Solid) .. />
 
                 <div>
                     <h3 class="font-bold">(error.title)</h3>
-                    <p class="text-xs">(error.description)</p>
+                    <p class="text-xs">(error.description)" Error ID: "(error.req_uuid)</p>
                 </div>
 
 

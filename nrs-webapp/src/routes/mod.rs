@@ -9,7 +9,9 @@ use axum_htmx::HxRequest;
 use nrs_webapp_frontend::{maybe_document, views};
 
 use crate::{
-    extract::doc_props::DocProps, middleware::mw_res_mapper, routes::fallback::fallback_handler,
+    extract::doc_props::DocProps,
+    middleware::{mw_req_stamp::mw_req_stamp, mw_res_map::mw_res_mapper},
+    routes::fallback::fallback_handler,
 };
 
 pub fn router() -> Router {
@@ -17,6 +19,7 @@ pub fn router() -> Router {
         .route("/", get(home))
         .fallback(fallback_handler)
         .layer(axum::middleware::map_response(mw_res_mapper))
+        .layer(axum::middleware::from_fn(mw_req_stamp))
         .nest_service("/static", static_serve::service());
     #[cfg(debug_assertions)]
     {
@@ -26,5 +29,6 @@ pub fn router() -> Router {
 }
 
 async fn home(hx_req: HxRequest, DocProps(doc_props): DocProps) -> impl IntoResponse {
+    tracing::debug!("{:<12} -- home", "ROUTE");
     maybe_document(hx_req, doc_props, views::pages::home::home())
 }

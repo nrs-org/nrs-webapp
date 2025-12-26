@@ -15,6 +15,7 @@ where
         parts: &mut axum::http::request::Parts,
         state: &S,
     ) -> Result<Self, Self::Rejection> {
+        tracing::debug!("{:<12} -- DocProps", "EXTRACTOR");
         // TODO: implement this
         Ok(Self(DocumentProps {
             logged_in: false,
