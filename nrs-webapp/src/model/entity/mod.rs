@@ -15,6 +15,7 @@ pub struct ListPayload {
     pub order_by: Option<(&'static str, Order)>,
 }
 
+#[allow(async_fn_in_trait)]
 pub trait DbBmc {
     const TABLE_NAME: &'static str;
 
@@ -119,6 +120,7 @@ pub trait DbBmc {
     }
 }
 
+#[allow(async_fn_in_trait)]
 pub trait DbBmcWithPkey: DbBmc {
     const PRIMARY_KEY: &'static str;
     type PkeyType: Into<EntityId>;
