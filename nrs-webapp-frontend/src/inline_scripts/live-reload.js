@@ -1,4 +1,4 @@
-const ev = new EventSource("/__watch");
+const ev = new EventSource("/__dev_only/livereload");
 let connectedOnce = false;
 
 ev.onopen = () => {

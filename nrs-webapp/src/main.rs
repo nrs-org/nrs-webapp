@@ -13,7 +13,7 @@ use tower_http::services::ServeDir;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 pub use crate::error::{Error, Result};
-use crate::{config::AppConfig, middleware::mw_res_mapper};
+use crate::{config::AppConfig, middleware::mw_res_mapper, routes::router};
 
 #[cfg(debug_assertions)]
 mod _dev_utils;
@@ -22,6 +22,7 @@ pub mod error;
 pub mod extract;
 pub mod middleware;
 pub mod model;
+pub mod routes;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -39,36 +40,7 @@ async fn main() -> anyhow::Result<()> {
     #[cfg(debug_assertions)]
     _dev_utils::init_dev().await;
 
-    let mut routes = Router::new()
-        .route(
-            "/test",
-            get(|| async { Html("<h1>con so cua su rau ma</h1>") }),
-        )
-        .fallback(fallback_handler)
-        .layer(axum::middleware::map_response(mw_res_mapper))
-        .nest_service("/static", ServeDir::new(&AppConfig::get().STATIC_SERVE_DIR));
-
-    #[cfg(debug_assertions)]
-    {
-        let live_reload_router = Router::new().route(
-            "/",
-            get(|| async {
-                use std::time::Duration;
-
-                use axum::response::{Sse, sse::Event};
-                use tokio::time::interval;
-                use tokio_stream::{StreamExt, wrappers::IntervalStream};
-
-                let interval = interval(Duration::from_secs(20));
-                let stream = IntervalStream::new(interval)
-                    .map(|_| Ok::<_, Infallible>(Event::default().event("ping")));
-
-                Sse::new(stream)
-            }),
-        );
-
-        routes = routes.nest("/__watch", live_reload_router);
-    }
+    let routes = router();
 
     let addr = "0.0.0.0:3621";
     let listener = tokio::net::TcpListener::bind(addr).await?;
@@ -76,9 +48,4 @@ async fn main() -> anyhow::Result<()> {
 
     axum::serve(listener, routes.into_make_service()).await?;
     Ok(())
-}
-
-#[axum::debug_handler]
-async fn fallback_handler(OriginalUri(uri): OriginalUri) -> Result<Infallible> {
-    Err(Error::PageNotFound { uri })
 }
