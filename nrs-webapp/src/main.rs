@@ -7,6 +7,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[cfg(debug_assertions)]
 mod _dev_utils;
+pub mod config;
+pub mod model;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
