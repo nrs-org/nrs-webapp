@@ -5,15 +5,24 @@ use std::net::SocketAddr;
 use axum::{Router, response::Html, routing::get};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+#[cfg(debug_assertions)]
+mod _dev_utils;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::try_from_default_env()?)
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| format!("{}=debug", env!("CARGO_CRATE_NAME")).into()),
+            // Disable timestamps and targets for cleaner output during development
+            // TODO: Adjust this for production use
+            tracing_subscriber::fmt::layer()
+                .with_target(false)
+                .without_time(),
         )
-        .with(tracing_subscriber::fmt::layer())
         .init();
+
+    #[cfg(debug_assertions)]
+    _dev_utils::init_dev().await;
 
     let routes = Router::new().route(
         "/test",
