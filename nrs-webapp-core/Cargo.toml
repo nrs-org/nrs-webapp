@@ -4,3 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.147"
+sqlbindable = { version = "0.1.0", path = "../sqlbindable", optional = true }
+sqlx = { version = "0.8.6", default-features = false, optional = true }
+sea-query = { version = "1.0.0-rc.22", default-features = false, optional = true }
+thiserror = "2.0.17"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { version = "=0.2.104" }
+
+[features]
+sql = ["dep:sqlx", "dep:sea-query", "dep:sqlbindable"]
