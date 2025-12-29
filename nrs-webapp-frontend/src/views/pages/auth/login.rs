@@ -13,6 +13,18 @@ pub enum LoginToast {
     LoginAgainAfterEmailVerification,
 }
 
+/// Renders the sign-in page UI with username/password fields, links, and social login buttons.
+///
+/// The returned component renders a form posting to `/auth/login` with client-side validators,
+/// navigation links for password reset and registration, and buttons for GitHub and Google sign-in.
+///
+/// # Examples
+///
+/// ```
+/// // Construct the component (rendering is performed by the surrounding framework)
+/// let component = crate::views::pages::auth::login();
+/// ```
+pub fn login() -> impl Renderable;
 pub fn login() -> impl Renderable {
     rsx! {
         <Form form_id="signin-form" title="Sign in" hx_post="/auth/login">

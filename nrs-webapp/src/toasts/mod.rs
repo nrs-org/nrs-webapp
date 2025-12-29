@@ -9,6 +9,19 @@ pub enum ConstToast {
 }
 
 impl From<ConstToast> for Toast {
+    /// Converts a `ConstToast` variant into a `Toast` configured for display.
+    ///
+    /// Each variant is mapped to a `Toast` with appropriate `kind`, `title`, and rendered `description`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nrs_webapp::toasts::{ConstToast, Toast, ToastKind};
+    ///
+    /// let t: Toast = ConstToast::LoginAgainAfterEmailVerification.into();
+    /// assert_eq!(t.kind, ToastKind::Success);
+    /// assert_eq!(t.title, "Email Verified");
+    /// ```
     fn from(value: ConstToast) -> Self {
         match value {
             ConstToast::LoginAgainAfterEmailVerification => Toast {

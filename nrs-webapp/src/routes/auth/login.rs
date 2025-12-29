@@ -23,10 +23,34 @@ use crate::{
     routes::auth::confirm_mail::redirect_to_confirm_mail_page,
 };
 
+/// Create a router that mounts the login page and submission handlers at the root path.
+///
+/// The returned Router<ModelManager> exposes a GET handler (`page`) and a POST handler (`submit`)
+/// mounted at "/".
+///
+/// # Examples
+///
+/// ```
+/// # use nrs_webapp::routes::auth::login::router;
+/// let _router = router();
+/// ```
 pub fn router() -> Router<ModelManager> {
     Router::new().route("/", get(page).post(submit))
 }
 
+/// Render the login page, returning either a full HTML page or an HTMX fragment based on the request.
+///
+/// Returns an HTTP response containing the login page or an HTMX partial.
+///
+/// # Examples
+///
+/// ```
+/// # async fn example() {
+/// // Typical handler invocation within an async context:
+/// let resp = page(hx_req, DocProps(props)).await;
+/// // `resp` can be converted into an HTTP response to send to the client.
+/// # }
+/// ```
 async fn page(hx_req: HxRequest, DocProps(props): DocProps) -> impl IntoResponse {
     tracing::debug!("{:<12} -- GET auth::login", "ROUTE");
     maybe_document(hx_req, props, login())
@@ -45,6 +69,35 @@ struct LoginUser {
     email_verified_at: Option<OffsetDateTime>,
 }
 
+/// Handle POST submissions to the login endpoint.
+///
+/// Authenticates the provided username and password; if credentials are valid and the
+/// account's email is verified, issues a JWT, attaches an authentication cookie and
+/// redirects to the application root. If credentials are valid but the email is not
+/// verified, redirects to the email confirmation page. If authentication fails, returns
+/// an authentication error.
+///
+/// # Returns
+///
+/// - `Ok(Response)` — on success: either a redirect to `/` with an auth cookie (when the
+///   user's email is verified) or a redirect to the email confirmation page (when the
+///   user's email is not verified).
+/// - `Err(Error::Auth(LoginError::InvalidCredentials))` — when the username/password
+///   combination is invalid. Other errors from downstream operations (database access,
+///   hashing, or JWT signing) are propagated as `Err`.
+///
+/// # Examples
+///
+/// ```no_run
+/// use axum::response::Response;
+/// # async fn run_example() -> Result<(), Box<dyn std::error::Error>> {
+/// // Handler wiring and request construction are omitted here; this shows the expected
+/// // outcome semantics when calling the handler:
+/// // - Valid credentials + verified email -> redirect to `/` with auth cookie.
+/// // - Valid credentials + unverified email -> redirect to confirmation page.
+/// // - Invalid credentials -> `Err(Error::Auth(LoginError::InvalidCredentials))`.
+/// # Ok(()) }
+/// ```
 async fn submit(
     hx_req: HxRequest,
     State(mut mm): State<ModelManager>,

@@ -8,6 +8,18 @@ use hypertext::prelude::*;
 
 use crate::views::components::link::{Link, LinkParams};
 
+/// Renders a theme toggle control that swaps between sun and moon icons.
+///
+/// The component emits a hidden checkbox (value `"night"`) and two Icon elements
+/// whose visibility toggles via the surrounding "swap" classes; intended to be
+/// used as a UI hook for switching light/dark theme states.
+///
+/// # Examples
+///
+/// ```
+/// // Instantiate the component in a parent view
+/// let _component = theme_controller();
+/// ```
 #[component]
 fn theme_controller() -> impl Renderable {
     rsx! {
@@ -19,6 +31,24 @@ fn theme_controller() -> impl Renderable {
     }
 }
 
+/// Renders the application's responsive navigation bar.
+///
+/// The header includes primary route links, a brand link, a theme toggle, and authentication controls:
+/// - Desktop and mobile navigation for the routes "Home" and "Entries".
+/// - A theme toggle control.
+/// - When `logged_in` is `true`, a user avatar with a dropdown containing "Profile" and a "Logoff" action (POST to `/auth/logoff`).
+/// - When `logged_in` is `false`, a "Log in" button that loads the login fragment via HTMX.
+///
+/// # Parameters
+///
+/// - `logged_in`: when `true`, show the authenticated user menu; when `false`, show the login trigger.
+///
+/// # Examples
+///
+/// ```
+/// // Render the navbar for an anonymous user
+/// let _ = navbar(false);
+/// ```
 #[component]
 pub fn navbar(logged_in: bool) -> impl Renderable {
     let routes = [("Home", "/"), ("Entries", "/entries")];

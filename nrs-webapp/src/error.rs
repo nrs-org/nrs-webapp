@@ -35,6 +35,16 @@ pub enum Error {
 }
 
 impl From<sqlx::Error> for Error {
+    /// Convert a `sqlx::Error` into this crate's `Error` by wrapping it in `Error::Model`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use nrs_webapp::error::Error;
+    /// let sql_err = sqlx::Error::RowNotFound;
+    /// let err = Error::from(sql_err);
+    /// assert!(matches!(err, Error::Model(_)));
+    /// ```
     fn from(value: sqlx::Error) -> Self {
         Self::Model(model::Error::Sqlx(value))
     }
@@ -43,6 +53,23 @@ impl From<sqlx::Error> for Error {
 pub type Result<T> = core::result::Result<T, Error>;
 
 impl Error {
+    /// Map an `Error` to an HTTP status code and a short client-facing message.
+    ///
+    /// Returns a tuple with the HTTP `StatusCode` to send and a `Cow<'static, str>` containing a
+    /// concise, user-visible description of the error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use axum::http::StatusCode;
+    /// use axum::http::Uri;
+    /// use crate::error::Error;
+    ///
+    /// let err = Error::PageNotFound { uri: Uri::from_static("/missing") };
+    /// let (status, desc) = err.get_client_error_parts();
+    /// assert_eq!(status, StatusCode::NOT_FOUND);
+    /// assert_eq!(desc, "The page you are looking for does not exist.");
+    /// ```
     pub fn get_client_error_parts(&self) -> (StatusCode, Cow<'static, str>) {
         tracing::debug!("{:<12} -- Get client error parts for {self:?}", "ERR_PARTS");
         match self {

@@ -20,6 +20,16 @@ pub enum TokenPurpose {
 }
 
 impl TokenPurpose {
+    /// Get the SQL enum string corresponding to this token purpose.
+    ///
+    /// Returns the uppercase enum identifier used in the database: `"EMAIL_VERIFICATION"` or `"PASSWORD_RESET"`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// assert_eq!(TokenPurpose::EmailVerification.to_enum_string(), "EMAIL_VERIFICATION");
+    /// assert_eq!(TokenPurpose::PasswordReset.to_enum_string(), "PASSWORD_RESET");
+    /// ```
     pub fn to_enum_string(&self) -> &'static str {
         match self {
             TokenPurpose::EmailVerification => "EMAIL_VERIFICATION",
@@ -29,12 +39,30 @@ impl TokenPurpose {
 }
 
 impl From<TokenPurpose> for Expr {
+    /// Converts a `TokenPurpose` into an SQL expression of type `USER_ONE_TIME_TOKEN_PURPOSE`.
+    ///
+    /// The produced expression is a string literal of the enum variant cast to the database enum type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let _expr = Expr::from(TokenPurpose::EmailVerification);
+    /// ```
     fn from(purpose: TokenPurpose) -> Self {
         Value::String(Some(purpose.to_enum_string().into())).cast_as("USER_ONE_TIME_TOKEN_PURPOSE")
     }
 }
 
 impl TryIntoExpr for TokenPurpose {
+    /// Convert this `TokenPurpose` into an SQL expression representing that enum value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::model::token::TokenPurpose;
+    ///
+    /// let expr = TokenPurpose::EmailVerification.into_expr().unwrap();
+    /// ```
     fn into_expr(self) -> core::result::Result<Expr, TryIntoExprError> {
         Ok(self.into())
     }
@@ -62,6 +90,23 @@ struct UserId {
 }
 
 impl UserOneTimeTokenBmc {
+    /// Inserts a new one-time token row or updates an existing unused token for the same user and purpose.
+    ///
+    /// If a row with the same `(user_id, purpose)` exists and `last_used_at` is NULL, the existing row is updated
+    /// with the provided fields and `created_at` is set to the default timestamp. Otherwise a new row is inserted.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` on success.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example_usage(ps: &mut impl crate::store::PrimaryStore, req: crate::model::token::UserOneTimeTokenCreateReq) -> anyhow::Result<()> {
+    /// crate::model::token::UserOneTimeTokenBmc::create_token(ps, req).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn create_token(
         ps: &mut impl PrimaryStore,
         create_req: UserOneTimeTokenCreateReq,
@@ -83,6 +128,28 @@ impl UserOneTimeTokenBmc {
         Ok(())
     }
 
+    /// Validate and consume a one-time token and return the associated user ID.
+    ///
+    /// Attempts to mark the token identified by `token_hash` and `purpose` as used (sets `last_used_at`)
+    /// only if the token exists, matches the purpose, has not expired, and has not been used yet.
+    ///
+    /// # Returns
+    ///
+    /// `String` containing the `user_id` associated with the consumed token.
+    ///
+    /// # Errors
+    ///
+    /// Returns `model::Error::InvalidOrExpiredToken` if no matching unused and unexpired token is found.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use nrs_webapp::model::token::{UserOneTimeTokenBmc, TokenPurpose};
+    /// # async fn example(ps: &mut impl nrs_webapp::store::PrimaryStore) -> Result<(), Box<dyn std::error::Error>> {
+    /// let user_id = UserOneTimeTokenBmc::check_and_consume_token(ps, "some_hash", TokenPurpose::EmailVerification).await?;
+    /// println!("consumed token for user: {}", user_id);
+    /// # Ok(()) }
+    /// ```
     pub async fn check_and_consume_token(
         ps: &mut impl PrimaryStore,
         token_hash: &str,

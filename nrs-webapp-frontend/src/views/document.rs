@@ -15,6 +15,26 @@ pub struct DocumentProps {
     pub toasts: Vec<Toast>,
 }
 
+/// Renders the full HTML document shell for the application, including head assets, a toast container, navbar, page content, and footer.
+///
+/// The output sets `lang="en"`, applies the "winter" theme, and exposes an `data-is-error` attribute matching `props.error`. Toasts from `props.toasts` are rendered into a fixed toast root. In debug builds an embedded live-reload script is included; it is omitted in non-debug builds.
+///
+/// # Examples
+///
+/// ```
+/// use crate::views::document::{document, DocumentProps};
+/// use crate::views::components::Toast;
+/// use leptos::view::View;
+///
+/// let props = DocumentProps {
+///     error: false,
+///     logged_in: true,
+///     toasts: Vec::<Toast>::new(),
+/// };
+///
+/// // `children` can be any renderable; here we use an empty fragment.
+/// let html = document(&props, &|_| View::empty());
+/// ```
 #[component]
 pub fn document<R: Renderable>(props: &DocumentProps, children: &R) -> impl Renderable {
     // XSS SAFETY: this is only included in debug builds for live reloading

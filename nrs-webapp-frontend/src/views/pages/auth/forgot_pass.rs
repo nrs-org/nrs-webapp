@@ -3,6 +3,22 @@ use hypertext::prelude::*;
 use super::Form;
 use crate::views::components::link::{Link, LinkParams};
 
+/// Render the "Recover password" form for submitting an email to request a password reset.
+///
+/// The form includes an email input with client-side validation, a submit button labeled
+/// "Reset password", and a link back to the login page. It posts to `/auth/forgotpass`.
+///
+/// # Examples
+///
+/// ```
+/// let view = forgot_pass();
+/// // `view` can be returned from a handler or composed into a page template.
+/// assert!(true);
+/// ```
+///
+/// # Returns
+///
+/// A renderable view that displays the "Recover password" form allowing users to submit their email to request a password reset.
 pub fn forgot_pass() -> impl Renderable {
     rsx! {
         <Form form_id="forgotpass-form" title="Recover password" hx_post="/auth/forgotpass">
@@ -17,6 +33,13 @@ pub fn forgot_pass() -> impl Renderable {
     }
 }
 
+/// Render a confirmation form indicating that a password reset email was sent.
+///
+/// # Examples
+///
+/// ```
+/// let _ = forgot_pass_sent();
+/// ```
 pub fn forgot_pass_sent() -> impl Renderable {
     rsx! {
         <Form form_id="forgotpass-sent-form" title="Password reset email sent" hx_post="/auth/forgotpass">
@@ -29,6 +52,19 @@ pub fn forgot_pass_sent() -> impl Renderable {
     }
 }
 
+/// Render a password reset form that submits a new password together with a reset token.
+///
+/// The form includes fields for the new password, confirmation, client-side validation,
+/// a hidden `token` input, and a link back to the login page.
+///
+/// `token` — the password reset token to include as a hidden form field.
+///
+/// # Examples
+///
+/// ```
+/// let view = reset_pass("token123".to_string());
+/// // use `view` with the app's rendering pipeline
+/// ```
 pub fn reset_pass(token: String) -> impl Renderable {
     rsx! {
         <Form form_id="reset-form" title="Recover password" hx_post="/auth/forgotpass/reset">

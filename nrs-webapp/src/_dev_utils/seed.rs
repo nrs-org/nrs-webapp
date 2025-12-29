@@ -29,6 +29,28 @@ pub async fn seed_dev_db(db: &Db) {
 
 static TEST_USER_ID: Mutex<Option<String>> = Mutex::new(None);
 
+/// Creates a deterministic test user in the database and returns its user ID.
+///
+/// The function creates a user with fixed credentials, hashes the password using the configured
+/// PasswordHasher, persists the user via `UserBmc::create_user`, marks the user's email as
+/// verified, stores the resulting ID in the global `TEST_USER_ID`, and returns the created ID.
+///
+/// `mm` — mutable reference to the ModelManager used for database operations.
+///
+/// # Returns
+///
+/// The newly created user's ID.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// # async fn run_example() {
+/// # // obtain or construct a ModelManager suitable for tests/dev
+/// # let mut mm = /* ModelManager::new_for_tests().await */ unimplemented!();
+/// let id = create_test_user(&mut mm).await;
+/// println!("created test user id: {}", id);
+/// # }
+/// ```
 async fn create_test_user(mm: &mut ModelManager) -> String {
     tracing::info!("{:<12} -- create_test_user()", "FOR-DEV-ONLY");
 
