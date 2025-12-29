@@ -24,7 +24,6 @@ pub enum LoginToast {
 /// // Construct the component (rendering is performed by the surrounding framework)
 /// let component = crate::views::pages::auth::login();
 /// ```
-pub fn login() -> impl Renderable;
 pub fn login() -> impl Renderable {
     rsx! {
         <Form form_id="signin-form" title="Sign in" hx_post="/auth/login">
@@ -57,3 +56,4 @@ pub fn login() -> impl Renderable {
         </Form>
     }
 }
+
