@@ -3,7 +3,7 @@ use std::{fmt::Display, str::FromStr};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "sql", derive(sqlx::Type))]
 #[cfg_attr(feature = "sql", sqlx(type_name = "ENTRYTYPE"))]
 pub enum EntryType {
@@ -18,16 +18,11 @@ pub enum EntryType {
     MusicAlbumTrack,
     Franchise,
     Game,
+    #[default]
     Other,
     // Non-standard
     GenericPerson,
     GenericOrganization,
-}
-
-impl Default for EntryType {
-    fn default() -> Self {
-        Self::Other
-    }
 }
 
 #[cfg(feature = "sql")]
