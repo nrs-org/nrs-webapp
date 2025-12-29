@@ -1,7 +1,6 @@
-use std::{convert::Infallible, fmt::Arguments, str::FromStr};
+use std::{convert::Infallible, str::FromStr};
 
 use axum::{
-    RequestPartsExt,
     extract::{FromRequestParts, Query},
     http::request::Parts,
 };

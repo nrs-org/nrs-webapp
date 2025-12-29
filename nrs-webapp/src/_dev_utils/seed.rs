@@ -1,30 +1,26 @@
 use std::sync::Mutex;
 
 use nrs_webapp_core::{data::entry::types::idtype::EntryType, legacy_json::Bulk};
-use sea_query::Expr;
-use sqlbindable::Fields;
-use sqlx::prelude::FromRow;
 
 use crate::{
     _dev_utils::Db,
     crypt::password_hash::PasswordHasher,
     model::{
         ModelManager,
-        entity::{DbBmc, DbBmcWithPkey, ListPayload},
         entry::{EntryBmc, EntryForCreate},
         user::{UserBmc, UserForCreate},
     },
 };
 
-pub async fn seed_dev_db(db: &Db) {
+pub async fn seed_dev_db(_db: &Db) {
     tracing::info!("{:<12} -- seed_dev_db()", "FOR-DEV-ONLY");
 
     let mut mm = ModelManager::new()
         .await
         .expect("Failed to create ModelManager");
 
-    let test_user_id = create_test_user(&mut mm).await;
-    seed_entries(&mut mm, &test_user_id).await;
+    let _ = create_test_user(&mut mm).await;
+    seed_entries(&mut mm).await;
 }
 
 static TEST_USER_ID: Mutex<Option<String>> = Mutex::new(None);
@@ -88,11 +84,11 @@ async fn create_test_user(mm: &mut ModelManager) -> String {
     id
 }
 
-pub fn test_user_id() -> Option<String> {
-    TEST_USER_ID.lock().unwrap().clone()
+pub fn test_user_id() -> String {
+    TEST_USER_ID.lock().unwrap().clone().unwrap()
 }
 
-async fn seed_entries(mm: &mut ModelManager, test_user_id: &str) {
+async fn seed_entries(mm: &mut ModelManager) {
     tracing::info!("{:<12} -- seed_entries()", "FOR-DEV-ONLY");
 
     let entries = include_str!("latest-pj-escape-bulk.json");
@@ -114,7 +110,7 @@ async fn seed_entries(mm: &mut ModelManager, test_user_id: &str) {
             .and_then(|v| v.as_str())
             .and_then(EntryType::from_enum_string)
             .unwrap_or_default(),
-        added_by: test_user_id.into(),
+        added_by: test_user_id(),
         overall_score: scores
             .get(&id)
             .and_then(|r| {

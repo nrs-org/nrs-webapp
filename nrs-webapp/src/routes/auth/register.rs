@@ -1,58 +1,20 @@
-use std::{
-    net::{IpAddr, SocketAddr},
-    str::FromStr,
-    sync::OnceLock,
-};
-
-use always_send::FutureExt;
-use axum::{
-    Form, Router,
-    extract::{Query, State},
-    http::StatusCode,
-    response::{IntoResponse, Redirect, Response},
-    routing::{get, post},
-};
+use axum::{Router, extract::State, response::IntoResponse, routing::get};
 use axum_client_ip::ClientIp;
-use axum_extra::{TypedHeader, extract::CookieJar, headers::UserAgent};
-use axum_htmx::{HxPushUrl, HxRedirect, HxRefresh, HxRequest, HxTarget};
-use base64::{Engine, prelude::BASE64_URL_SAFE};
-use futures::FutureExt as _;
-use governor::{DefaultKeyedRateLimiter, Quota, RateLimiter};
-use nonzero_ext::nonzero;
-use nrs_webapp_frontend::{
-    maybe_document,
-    views::pages::auth::{
-        confirm_email::confirm_mail, forgot_pass::forgot_pass, login::login, register::register,
-    },
-};
+use axum_extra::{TypedHeader, headers::UserAgent};
+use axum_htmx::HxRequest;
+use nrs_webapp_frontend::{maybe_document, views::pages::auth::register::register};
 use serde::Deserialize;
-use sqlbindable::Fields;
-use sqlx::prelude::FromRow;
-use time::OffsetDateTime;
 use validator::Validate;
 
 use crate::{
-    Error, Result,
-    auth::{self, add_auth_cookie, error::LoginError, remove_auth_cookie},
-    config::AppConfig,
-    crypt::{
-        jwt::JwtContext,
-        password_hash::PasswordHasher,
-        token::{Token, TokenHasher},
-    },
-    extract::{
-        doc_props::DocProps,
-        with_rejection::{WRForm, WRQuery, WRVForm},
-    },
-    mail::{get_mailer, send_email_verification_mail},
+    Result,
+    crypt::password_hash::PasswordHasher,
+    extract::{doc_props::DocProps, with_rejection::WRVForm},
     model::{
-        self, ModelManager,
-        token::{TokenPurpose, UserOneTimeTokenBmc, UserOneTimeTokenCreateReq},
+        ModelManager,
         user::{UserBmc, UserForCreate},
     },
     routes::auth::confirm_mail::redirect_to_confirm_mail_page,
-    toast_on_page_load,
-    toasts::ConstToast,
     validate::auth::{USERNAME_REGEX, validate_password},
 };
 
@@ -115,7 +77,7 @@ struct RegisterPayload {
 /// // Integration tests should construct an HTTP request and assert the redirect target.
 /// ```
 async fn submit(
-    HxRequest(hx_req): HxRequest,
+    HxRequest(_hx_req): HxRequest,
     State(mut mm): State<ModelManager>,
     ClientIp(ip_addr): ClientIp,
     TypedHeader(user_agent): TypedHeader<UserAgent>,

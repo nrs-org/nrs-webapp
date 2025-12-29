@@ -1,8 +1,4 @@
-use std::marker::PhantomData;
-
 use crate::model::store::{Db, new_db_pool, primary_store::PrimaryStore};
-use sea_query::{PostgresQueryBuilder, QueryStatementWriter};
-use sea_query_sqlx::{SqlxBinder, SqlxValues};
 
 pub mod entity;
 pub mod entry;
@@ -12,7 +8,7 @@ pub mod token;
 pub mod user;
 
 pub use error::{Error, Result};
-use sqlx::{Connection, Database, FromRow, Transaction};
+use sqlx::{Database, Transaction};
 
 type SqlxDatabase = sqlx::Postgres;
 type SqlxRow = sqlx::postgres::PgRow;

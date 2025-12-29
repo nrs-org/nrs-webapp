@@ -1,6 +1,5 @@
 use crate::Result;
 use axum::{
-    body::Body,
     extract::{FromRequestParts, Request},
     http::request::Parts,
     middleware::Next,

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use include_dir::{File, include_dir};
-use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
+use sqlx::postgres::PgPoolOptions;
 
 use crate::_dev_utils::{Db, PG_DEV_APP_URL, PG_DEV_POSTGRES_URL};
 

@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::model::{Error, Result};
+use crate::model::Result;
 use always_send::FutureExt;
 use sea_query::PostgresQueryBuilder;
 use sea_query_sqlx::{SqlxBinder, SqlxValues};

@@ -2,10 +2,7 @@ use std::{str::FromStr, sync::OnceLock, time::Duration};
 
 use anyhow::Context;
 use axum_client_ip::ClientIpSource;
-use base64::{
-    Engine as _,
-    prelude::{BASE64_URL_SAFE, BASE64_URL_SAFE_NO_PAD},
-};
+use base64::{Engine as _, prelude::BASE64_URL_SAFE};
 
 #[derive(Debug)]
 #[allow(non_snake_case)]

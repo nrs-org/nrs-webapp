@@ -1,12 +1,9 @@
 use async_trait::async_trait;
-use hypertext::{Renderable, Rendered};
-use resend_rs::{
-    Resend,
-    types::{CreateEmailBaseOptions, Email},
-};
+use hypertext::Rendered;
+use resend_rs::{Resend, types::CreateEmailBaseOptions};
 
 use super::Result;
-use crate::{config::AppConfig, mail::Mailer};
+use crate::mail::Mailer;
 
 pub struct ResendMailer(Resend);
 

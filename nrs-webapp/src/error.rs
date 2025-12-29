@@ -1,11 +1,10 @@
 use std::{borrow::Cow, sync::Arc};
 
 use axum::{
-    extract::OriginalUri,
     http::{StatusCode, Uri},
     response::IntoResponse,
 };
-use nrs_webapp_frontend::views::{self, error::ClientError};
+use nrs_webapp_frontend::views::error::ClientError;
 use thiserror::Error;
 
 use crate::{auth, crypt, extract::with_rejection::RejectionError, mail, model};

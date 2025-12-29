@@ -1,7 +1,7 @@
 use std::sync::OnceLock;
 
 use argon2::{
-    Algorithm, Argon2, PasswordHasher as _, PasswordVerifier,
+    Argon2, PasswordHasher as _, PasswordVerifier,
     password_hash::{SaltString, rand_core::OsRng},
 };
 

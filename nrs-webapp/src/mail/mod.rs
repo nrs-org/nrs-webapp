@@ -6,7 +6,6 @@ mod web_mail;
 use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
-use base64::{Engine, prelude::BASE64_URL_SAFE};
 pub use error::{Error, Result};
 use hypertext::{Renderable, Rendered};
 use nrs_webapp_frontend::views::email::{

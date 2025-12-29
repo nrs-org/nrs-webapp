@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_htmx::HxRequest;
-use nrs_webapp_frontend::views::{self, document::DocumentProps, error::ClientError};
+use nrs_webapp_frontend::views::{self, error::ClientError};
 use serde_json::{Value, json};
 
 use crate::{Error, extract::doc_props::DocProps, middleware::mw_req_stamp::ReqStamp};
@@ -44,7 +44,7 @@ pub async fn mw_res_mapper(
     tracing::debug!("DONE-REQUEST");
 
     let response_error = client_error_parts
-        .map(|(code, error)| views::error::error(hx_request, &doc_props, &error).into_response());
+        .map(|(_code, error)| views::error::error(hx_request, &doc_props, &error).into_response());
 
     response_error.unwrap_or(resp)
 }

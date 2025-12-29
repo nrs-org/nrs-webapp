@@ -2,27 +2,19 @@ use std::{net::IpAddr, str::FromStr, sync::OnceLock};
 
 use always_send::FutureExt;
 use axum::{
-    Form, Router,
-    extract::{Query, State},
-    http::StatusCode,
-    response::{IntoResponse, Redirect, Response},
-    routing::{get, post},
+    Router,
+    extract::State,
+    response::{IntoResponse, Redirect},
+    routing::get,
 };
 use axum_client_ip::ClientIp;
-use axum_extra::{TypedHeader, extract::CookieJar, headers::UserAgent};
-use axum_htmx::{HxPushUrl, HxRedirect, HxRefresh, HxRequest, HxTarget};
-use base64::{Engine, prelude::BASE64_URL_SAFE};
-use futures::FutureExt as _;
+use axum_extra::{TypedHeader, headers::UserAgent};
+use axum_htmx::{HxPushUrl, HxRequest};
 use governor::{DefaultKeyedRateLimiter, Quota, RateLimiter};
 use nonzero_ext::nonzero;
 use nrs_webapp_frontend::{
     maybe_document,
-    views::pages::auth::{
-        confirm_email::confirm_mail,
-        forgot_pass::{forgot_pass, forgot_pass_sent, reset_pass},
-        login::login,
-        register::register,
-    },
+    views::pages::auth::forgot_pass::{forgot_pass, forgot_pass_sent, reset_pass},
 };
 use serde::Deserialize;
 use sqlbindable::Fields;
@@ -32,26 +24,24 @@ use validator::Validate;
 
 use crate::{
     Error, Result,
-    auth::{self, add_auth_cookie, error::LoginError, remove_auth_cookie},
     config::AppConfig,
     crypt::{
-        jwt::JwtContext,
         password_hash::PasswordHasher,
         token::{Token, TokenHasher},
     },
     extract::{
         doc_props::DocProps,
-        with_rejection::{WRForm, WRQuery, WRVForm},
+        with_rejection::{WRQuery, WRVForm},
     },
-    mail::{get_mailer, send_email_verification_mail, send_password_reset_mail},
+    mail::send_password_reset_mail,
     model::{
-        self, ModelManager,
+        ModelManager,
         token::{TokenPurpose, UserOneTimeTokenBmc, UserOneTimeTokenCreateReq},
-        user::{UserBmc, UserForCreate},
+        user::UserBmc,
     },
     toast_on_page_load,
     toasts::ConstToast,
-    validate::auth::{USERNAME_REGEX, validate_password},
+    validate::auth::validate_password,
 };
 
 /// Creates a Router configured with the forgot-password endpoints.
@@ -142,7 +132,7 @@ struct EmailSubmitPayload {
 /// ```
 async fn email_submit(
     DocProps(props): DocProps,
-    State(mut mm): State<ModelManager>,
+    State(mm): State<ModelManager>,
     ClientIp(ip_addr): ClientIp,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
     WRVForm(EmailSubmitPayload { email }): WRVForm<EmailSubmitPayload>,
@@ -174,8 +164,8 @@ struct ResetPasswordSubmitPayload {
 /// let resp = (HxPushUrl("/auth/login".into()), Redirect::to(&url));
 /// ```
 async fn reset_submit(
-    DocProps(props): DocProps,
-    State(mut mm): State<ModelManager>,
+    DocProps(_props): DocProps,
+    State(mm): State<ModelManager>,
     WRVForm(ResetPasswordSubmitPayload { token, password }): WRVForm<ResetPasswordSubmitPayload>,
 ) -> Result<impl IntoResponse> {
     tracing::debug!("{:<12} -- POST auth::forgot_pass::reset", "ROUTE");

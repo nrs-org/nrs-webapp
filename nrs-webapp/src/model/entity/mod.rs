@@ -1,10 +1,8 @@
-use async_trait::async_trait;
 use sea_query::{Expr, ExprTrait, Order, Query, ReturningClause, SimpleExpr, Value};
-use sqlbindable::{BindContext, FieldVec, HasFields, TryIntoExpr};
+use sqlbindable::{BindContext, HasFields};
 
 use crate::model::{
-    Error, ModelManager, Result, SqlxDatabase, SqlxRow, entity::id::EntityId,
-    store::primary_store::PrimaryStore,
+    Error, Result, SqlxDatabase, SqlxRow, entity::id::EntityId, store::primary_store::PrimaryStore,
 };
 
 pub mod id;

@@ -1,5 +1,5 @@
 use axum::{
-    Form, Json,
+    Form,
     extract::{
         FromRef, FromRequest, FromRequestParts, Query, Request,
         rejection::{FormRejection, JsonRejection, QueryRejection},
@@ -8,7 +8,7 @@ use axum::{
     response::IntoResponse,
 };
 use thiserror::Error;
-use validator::{Validate, ValidateArgs, ValidationError, ValidationErrors};
+use validator::{Validate, ValidateArgs, ValidationErrors};
 
 pub struct WithRejection<T>(pub T);
 

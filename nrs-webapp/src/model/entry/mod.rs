@@ -1,8 +1,8 @@
 use sqlbindable::Fields;
-use sqlx::{FromRow, PgExecutor};
+use sqlx::FromRow;
 
 use crate::model::{
-    ModelManager, Result,
+    Result,
     entity::{DbBmc, DbBmcWithPkey},
     store::primary_store::PrimaryStore,
 };

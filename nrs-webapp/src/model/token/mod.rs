@@ -1,14 +1,9 @@
-use always_send::FutureExt as _;
-use sea_query::{Expr, ExprTrait, OnConflict, Query, ReturningClause, Value};
+use sea_query::{Expr, ExprTrait, OnConflict, Query, Value};
 use sqlbindable::{BindContext, Fields, HasFields, TryIntoExpr, TryIntoExprError};
 use sqlx::prelude::FromRow;
 use time::OffsetDateTime;
 
-use crate::model::{
-    self, Result,
-    entity::{DbBmc, DbBmcWithPkey},
-    store::primary_store::PrimaryStore,
-};
+use crate::model::{self, Result, entity::DbBmc, store::primary_store::PrimaryStore};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type)]
 #[sqlx(type_name = "USER_ONE_TIME_TOKEN_PURPOSE")]

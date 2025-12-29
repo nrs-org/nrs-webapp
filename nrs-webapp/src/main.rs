@@ -1,19 +1,9 @@
-#![allow(unused)]
+use std::net::SocketAddr;
 
-use std::{convert::Infallible, net::SocketAddr};
-
-use axum::{
-    Router,
-    extract::{MatchedPath, OriginalUri},
-    http::StatusCode,
-    response::Html,
-    routing::get,
-};
-use tower_http::services::ServeDir;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 pub use crate::error::{Error, Result};
-use crate::{config::AppConfig, model::ModelManager, routes::router};
+use crate::{model::ModelManager, routes::router};
 
 #[cfg(debug_assertions)]
 mod _dev_utils;

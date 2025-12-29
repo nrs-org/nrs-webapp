@@ -1,11 +1,9 @@
 pub mod error;
 pub mod session;
 
-use std::time::Duration;
-
 use axum_extra::extract::{
     CookieJar,
-    cookie::{Cookie, Expiration, SameSite},
+    cookie::{Cookie, SameSite},
 };
 pub use error::{Error, Result};
 
