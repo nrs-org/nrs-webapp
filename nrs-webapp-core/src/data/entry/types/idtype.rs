@@ -6,7 +6,6 @@ use thiserror::Error;
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "sql", derive(sqlx::Type))]
 #[cfg_attr(feature = "sql", sqlx(type_name = "ENTRYTYPE"))]
-#[derive(Default)]
 pub enum EntryType {
     // DAH_entry_id_impl
     Anime,
