@@ -67,7 +67,7 @@ use crate::{
 /// // mount `r` into your axum application
 /// ```
 pub fn router() -> Router<ModelManager> {
-    Router::new().route("/", get(page))
+    Router::new().route("/", get(page).post(submit))
 }
 
 /// Render the registration page using the provided document props and HTMX request.
