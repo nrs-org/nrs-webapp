@@ -26,7 +26,6 @@ pub enum EntryType {
     GenericOrganization,
 }
 
-
 #[cfg(feature = "sql")]
 pub mod sql {
     use sea_query::{Expr, ExprTrait, Nullable, Value};

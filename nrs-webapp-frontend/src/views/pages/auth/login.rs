@@ -56,4 +56,3 @@ pub fn login() -> impl Renderable {
         </Form>
     }
 }
-
