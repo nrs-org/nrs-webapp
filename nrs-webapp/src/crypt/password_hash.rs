@@ -198,3 +198,165 @@ mod tests {
         assert!(!ok);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hash_password_success() {
+        let password = "MySecureP@ssw0rd123";
+        let result = hash_password(password);
+        
+        assert!(result.is_ok(), "Password hashing should succeed");
+        let hash = result.unwrap();
+        assert!(!hash.is_empty(), "Hash should not be empty");
+        assert!(hash.starts_with("$argon2"), "Hash should be Argon2 format");
+    }
+
+    #[test]
+    fn test_hash_password_empty_string() {
+        let password = "";
+        let result = hash_password(password);
+        
+        assert!(result.is_ok(), "Should handle empty password");
+    }
+
+    #[test]
+    fn test_hash_password_long_password() {
+        let password = "a".repeat(1000);
+        let result = hash_password(&password);
+        
+        assert!(result.is_ok(), "Should handle long passwords");
+    }
+
+    #[test]
+    fn test_hash_password_special_characters() {
+        let password = "P@$$w0rd!#%&*()[]{}|;:,.<>?/~`";
+        let result = hash_password(password);
+        
+        assert!(result.is_ok(), "Should handle special characters");
+    }
+
+    #[test]
+    fn test_hash_password_unicode() {
+        let password = "пароль密码🔐";
+        let result = hash_password(password);
+        
+        assert!(result.is_ok(), "Should handle Unicode characters");
+    }
+
+    #[test]
+    fn test_verify_password_correct() {
+        let password = "TestPassword123!";
+        let hash = hash_password(password).unwrap();
+        
+        let result = verify_password(password, &hash);
+        assert!(result.is_ok(), "Verification should succeed");
+        assert!(result.unwrap(), "Password should match hash");
+    }
+
+    #[test]
+    fn test_verify_password_incorrect() {
+        let password = "TestPassword123!";
+        let wrong_password = "WrongPassword456!";
+        let hash = hash_password(password).unwrap();
+        
+        let result = verify_password(wrong_password, &hash);
+        assert!(result.is_ok(), "Verification should not error");
+        assert!(!result.unwrap(), "Wrong password should not match");
+    }
+
+    #[test]
+    fn test_verify_password_case_sensitive() {
+        let password = "TestPassword";
+        let hash = hash_password(password).unwrap();
+        
+        let result = verify_password("testpassword", &hash);
+        assert!(result.is_ok());
+        assert!(!result.unwrap(), "Password verification should be case-sensitive");
+    }
+
+    #[test]
+    fn test_verify_password_invalid_hash_format() {
+        let password = "TestPassword123!";
+        let invalid_hash = "not_a_valid_argon2_hash";
+        
+        let result = verify_password(password, invalid_hash);
+        assert!(result.is_err(), "Should fail with invalid hash format");
+    }
+
+    #[test]
+    fn test_verify_password_empty_password_against_hash() {
+        let password = "";
+        let hash = hash_password(password).unwrap();
+        
+        let result = verify_password("", &hash);
+        assert!(result.is_ok());
+        assert!(result.unwrap(), "Empty password should verify against its hash");
+        
+        let result_wrong = verify_password("notempty", &hash);
+        assert!(result_wrong.is_ok());
+        assert!(!result_wrong.unwrap(), "Non-empty should not match empty hash");
+    }
+
+    #[test]
+    fn test_hash_password_deterministic() {
+        let password = "SamePassword123";
+        let hash1 = hash_password(password).unwrap();
+        let hash2 = hash_password(password).unwrap();
+        
+        // Hashes should be different due to random salt
+        assert_ne!(hash1, hash2, "Same password should produce different hashes (salted)");
+        
+        // But both should verify correctly
+        assert!(verify_password(password, &hash1).unwrap());
+        assert!(verify_password(password, &hash2).unwrap());
+    }
+
+    #[test]
+    fn test_verify_password_whitespace_differences() {
+        let password = "password";
+        let hash = hash_password(password).unwrap();
+        
+        assert!(!verify_password("password ", &hash).unwrap(), "Trailing space should not match");
+        assert!(!verify_password(" password", &hash).unwrap(), "Leading space should not match");
+        assert!(!verify_password("pass word", &hash).unwrap(), "Internal space should not match");
+    }
+
+    #[test]
+    fn test_hash_password_boundary_lengths() {
+        // Test very short password
+        let short = "a";
+        assert!(hash_password(short).is_ok());
+        
+        // Test reasonable max length (most systems limit to 72-128 chars for bcrypt/argon2)
+        let long = "a".repeat(200);
+        assert!(hash_password(&long).is_ok());
+    }
+
+    #[test]
+    fn test_verify_password_hash_truncation() {
+        let password = "TestPassword";
+        let hash = hash_password(password).unwrap();
+        let truncated = &hash[..hash.len() - 5];
+        
+        let result = verify_password(password, truncated);
+        assert!(result.is_err(), "Truncated hash should fail verification");
+    }
+
+    #[test]
+    fn test_verify_password_modified_hash() {
+        let password = "TestPassword";
+        let mut hash = hash_password(password).unwrap();
+        
+        // Modify a character in the middle
+        if let Some(ch) = hash.chars().nth(20) {
+            let replacement = if ch == 'a' { 'b' } else { 'a' };
+            hash.replace_range(20..21, &replacement.to_string());
+        }
+        
+        let result = verify_password(password, &hash);
+        assert!(result.is_err() || !result.unwrap(), "Modified hash should not verify");
+    }
+}

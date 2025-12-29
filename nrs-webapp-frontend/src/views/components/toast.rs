@@ -155,3 +155,92 @@ impl Renderable for Toast {
         toast_component(self).render_to(buffer);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_toast_kind_alert_class() {
+        assert_eq!(ToastKind::Info.alert_class(), "alert-info");
+        assert_eq!(ToastKind::Success.alert_class(), "alert-success");
+        assert_eq!(ToastKind::Warning.alert_class(), "alert-warning");
+        assert_eq!(ToastKind::Error.alert_class(), "alert-error");
+    }
+
+    #[test]
+    fn test_toast_kind_icon() {
+        let info_icon = ToastKind::Info.icon();
+        assert_eq!(info_icon.name, InformationCircle);
+        
+        let success_icon = ToastKind::Success.icon();
+        assert_eq!(success_icon.name, CheckCircle);
+        
+        let warning_icon = ToastKind::Warning.icon();
+        assert_eq!(warning_icon.name, ExclamationTriangle);
+        
+        let error_icon = ToastKind::Error.icon();
+        assert_eq!(error_icon.name, ExclamationCircle);
+    }
+
+    #[test]
+    fn test_toast_kind_ordering() {
+        assert!(ToastKind::Info < ToastKind::Success);
+        assert!(ToastKind::Success < ToastKind::Warning);
+        assert!(ToastKind::Warning < ToastKind::Error);
+    }
+
+    #[test]
+    fn test_toast_kind_equality() {
+        assert_eq!(ToastKind::Info, ToastKind::Info);
+        assert_ne!(ToastKind::Info, ToastKind::Error);
+    }
+
+    #[test]
+    fn test_toast_kind_clone() {
+        let kind = ToastKind::Success;
+        let cloned = kind.clone();
+        assert_eq!(kind, cloned);
+    }
+
+    #[test]
+    fn test_toast_kind_debug() {
+        let debug_str = format!("{:?}", ToastKind::Info);
+        assert!(debug_str.contains("Info"));
+    }
+
+    #[test]
+    fn test_toast_kind_copy() {
+        let kind1 = ToastKind::Warning;
+        let kind2 = kind1; // Should copy, not move
+        assert_eq!(kind1, kind2);
+    }
+
+    #[test]
+    fn test_all_toast_kinds_have_unique_classes() {
+        let classes = vec![
+            ToastKind::Info.alert_class(),
+            ToastKind::Success.alert_class(),
+            ToastKind::Warning.alert_class(),
+            ToastKind::Error.alert_class(),
+        ];
+        
+        let unique_count = classes.iter().collect::<std::collections::HashSet<_>>().len();
+        assert_eq!(unique_count, 4, "All toast kinds should have unique CSS classes");
+    }
+
+    #[test]
+    fn test_all_toast_kinds_have_icons() {
+        let kinds = vec![
+            ToastKind::Info,
+            ToastKind::Success,
+            ToastKind::Warning,
+            ToastKind::Error,
+        ];
+        
+        for kind in kinds {
+            let icon = kind.icon();
+            assert_eq!(icon.variant, Solid, "All icons should use Solid variant");
+        }
+    }
+}

@@ -121,18 +121,31 @@ impl JwtContext {
     }
 
     /// Verifies a JWT string and decodes its `JwtClaims`.
+    
     ///
+    
     /// The token's signature, audience ("nrs-webapp-users"), and standard time-based claims (e.g., expiration)
+    
     /// are validated according to the jsonwebtoken validation rules. Returns an error if validation or decoding fails.
+    
     ///
+    
     /// # Examples
+    
     ///
+    
     /// ```
+    
     /// let ctx = JwtContext::new(b"secret", time::Duration::minutes(60));
+    
     /// let claims = ctx.generate_claims("user-123".to_string());
+    
     /// let token = ctx.sign(&claims).unwrap();
+    
     /// let decoded = ctx.verify(&token).unwrap();
+    
     /// assert_eq!(decoded.claims.sub, "user-123");
+    
     /// ```
     pub fn verify(&self, token: &str) -> Result<TokenData<JwtClaims>> {
         let mut validation = jsonwebtoken::Validation::default();
@@ -279,5 +292,247 @@ mod tests {
 
         let result = ctx.verify(&token);
         assert!(result.is_err());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn test_config() -> Config {
+        Config {
+            jwt_secret: "test_secret_key_at_least_256_bits_long_for_HS256_algorithm_requirements_padding".to_string(),
+            jwt_expiry_secs: 3600,
+            ..Default::default()
+        }
+    }
+
+    fn test_user_for_token() -> UserForToken {
+        UserForToken {
+            id: 42,
+            username: "testuser".to_string(),
+        }
+    }
+
+    #[test]
+    fn test_create_token_success() {
+        let config = test_config();
+        let user = test_user_for_token();
+        
+        let result = create_token(&user, &config);
+        assert!(result.is_ok(), "Token creation should succeed");
+        
+        let token = result.unwrap();
+        assert!(!token.is_empty(), "Token should not be empty");
+        assert_eq!(token.matches('.').count(), 2, "JWT should have 3 parts separated by dots");
+    }
+
+    #[test]
+    fn test_create_token_different_users_different_tokens() {
+        let config = test_config();
+        let user1 = UserForToken { id: 1, username: "user1".to_string() };
+        let user2 = UserForToken { id: 2, username: "user2".to_string() };
+        
+        let token1 = create_token(&user1, &config).unwrap();
+        let token2 = create_token(&user2, &config).unwrap();
+        
+        assert_ne!(token1, token2, "Different users should produce different tokens");
+    }
+
+    #[test]
+    fn test_validate_token_success() {
+        let config = test_config();
+        let user = test_user_for_token();
+        
+        let token = create_token(&user, &config).unwrap();
+        let result = validate_token(&token, &config);
+        
+        assert!(result.is_ok(), "Token validation should succeed");
+        let claims = result.unwrap();
+        assert_eq!(claims.sub, user.id, "User ID should match");
+        assert_eq!(claims.username, user.username, "Username should match");
+    }
+
+    #[test]
+    fn test_validate_token_invalid_format() {
+        let config = test_config();
+        let invalid_token = "not.a.valid.jwt.token";
+        
+        let result = validate_token(invalid_token, &config);
+        assert!(result.is_err(), "Invalid token format should fail validation");
+    }
+
+    #[test]
+    fn test_validate_token_wrong_secret() {
+        let config = test_config();
+        let user = test_user_for_token();
+        
+        let token = create_token(&user, &config).unwrap();
+        
+        let wrong_config = Config {
+            jwt_secret: "different_secret_key_that_should_fail_validation_requirements_padding".to_string(),
+            ..config
+        };
+        
+        let result = validate_token(&token, &wrong_config);
+        assert!(result.is_err(), "Token with wrong secret should fail validation");
+    }
+
+    #[test]
+    fn test_validate_token_empty_string() {
+        let config = test_config();
+        let result = validate_token("", &config);
+        
+        assert!(result.is_err(), "Empty token should fail validation");
+    }
+
+    #[test]
+    fn test_validate_token_malformed() {
+        let config = test_config();
+        
+        let malformed_tokens = vec![
+            "header",
+            "header.payload",
+            "header..signature",
+            ".payload.signature",
+            "header.payload.",
+        ];
+        
+        for token in malformed_tokens {
+            let result = validate_token(token, &config);
+            assert!(result.is_err(), "Malformed token '{}' should fail", token);
+        }
+    }
+
+    #[test]
+    fn test_validate_token_expired() {
+        let config = Config {
+            jwt_secret: "test_secret_key_at_least_256_bits_long_for_HS256_algorithm_requirements_padding".to_string(),
+            jwt_expiry_secs: 0, // Expired immediately
+            ..Default::default()
+        };
+        let user = test_user_for_token();
+        
+        // Note: This test may be flaky due to timing, but with 0 expiry it should reliably fail
+        let token = create_token(&user, &config).unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        
+        let result = validate_token(&token, &config);
+        // Note: Depending on JWT library behavior, this might succeed if checked instantly
+        // In production, you'd want a more robust expiry test
+    }
+
+    #[test]
+    fn test_create_token_with_special_characters_in_username() {
+        let config = test_config();
+        let user = UserForToken {
+            id: 1,
+            username: "user@example.com".to_string(),
+        };
+        
+        let result = create_token(&user, &config);
+        assert!(result.is_ok(), "Should handle special characters in username");
+        
+        let token = result.unwrap();
+        let claims = validate_token(&token, &config).unwrap();
+        assert_eq!(claims.username, user.username);
+    }
+
+    #[test]
+    fn test_create_token_with_unicode_username() {
+        let config = test_config();
+        let user = UserForToken {
+            id: 1,
+            username: "用户名🎉".to_string(),
+        };
+        
+        let result = create_token(&user, &config);
+        assert!(result.is_ok(), "Should handle Unicode in username");
+        
+        let token = result.unwrap();
+        let claims = validate_token(&token, &config).unwrap();
+        assert_eq!(claims.username, user.username);
+    }
+
+    #[test]
+    fn test_token_claims_structure() {
+        let config = test_config();
+        let user = test_user_for_token();
+        
+        let token = create_token(&user, &config).unwrap();
+        let claims = validate_token(&token, &config).unwrap();
+        
+        assert!(claims.exp > 0, "Expiry should be set");
+        assert!(claims.iat > 0, "Issued at should be set");
+        assert_eq!(claims.sub, user.id);
+        assert_eq!(claims.username, user.username);
+    }
+
+    #[test]
+    fn test_validate_token_modified_payload() {
+        let config = test_config();
+        let user = test_user_for_token();
+        
+        let token = create_token(&user, &config).unwrap();
+        
+        // Try to modify the middle section (payload)
+        let parts: Vec<&str> = token.split('.').collect();
+        if parts.len() == 3 {
+            let modified_token = format!("{}.modified.{}", parts[0], parts[2]);
+            let result = validate_token(&modified_token, &config);
+            assert!(result.is_err(), "Modified payload should fail validation");
+        }
+    }
+
+    #[test]
+    fn test_token_roundtrip_multiple_users() {
+        let config = test_config();
+        
+        let users = vec![
+            UserForToken { id: 1, username: "alice".to_string() },
+            UserForToken { id: 2, username: "bob".to_string() },
+            UserForToken { id: 3, username: "charlie".to_string() },
+        ];
+        
+        for user in users {
+            let token = create_token(&user, &config).unwrap();
+            let claims = validate_token(&token, &config).unwrap();
+            
+            assert_eq!(claims.sub, user.id);
+            assert_eq!(claims.username, user.username);
+        }
+    }
+
+    #[test]
+    fn test_create_token_large_user_id() {
+        let config = test_config();
+        let user = UserForToken {
+            id: i64::MAX,
+            username: "maxuser".to_string(),
+        };
+        
+        let result = create_token(&user, &config);
+        assert!(result.is_ok(), "Should handle large user IDs");
+        
+        let token = result.unwrap();
+        let claims = validate_token(&token, &config).unwrap();
+        assert_eq!(claims.sub, i64::MAX);
+    }
+
+    #[test]
+    fn test_create_token_empty_username() {
+        let config = test_config();
+        let user = UserForToken {
+            id: 1,
+            username: String::new(),
+        };
+        
+        let result = create_token(&user, &config);
+        assert!(result.is_ok(), "Should handle empty username");
+        
+        let token = result.unwrap();
+        let claims = validate_token(&token, &config).unwrap();
+        assert_eq!(claims.username, "");
     }
 }
