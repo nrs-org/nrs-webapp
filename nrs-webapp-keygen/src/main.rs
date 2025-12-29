@@ -14,6 +14,6 @@ fn main() {
     let key: [u8; KEY_LENGTH] = rand::random();
     eprintln!("Generated key: {:?}", key);
 
-    let base64_key = BASE64_URL_SAFE.encode(&key);
+    let base64_key = BASE64_URL_SAFE.encode(key);
     println!("{}", base64_key);
 }

@@ -121,31 +121,18 @@ impl JwtContext {
     }
 
     /// Verifies a JWT string and decodes its `JwtClaims`.
-    
     ///
-    
     /// The token's signature, audience ("nrs-webapp-users"), and standard time-based claims (e.g., expiration)
-    
     /// are validated according to the jsonwebtoken validation rules. Returns an error if validation or decoding fails.
-    
     ///
-    
     /// # Examples
-    
     ///
-    
     /// ```
-    
     /// let ctx = JwtContext::new(b"secret", time::Duration::minutes(60));
-    
     /// let claims = ctx.generate_claims("user-123".to_string());
-    
     /// let token = ctx.sign(&claims).unwrap();
-    
     /// let decoded = ctx.verify(&token).unwrap();
-    
     /// assert_eq!(decoded.claims.sub, "user-123");
-    
     /// ```
     pub fn verify(&self, token: &str) -> Result<TokenData<JwtClaims>> {
         let mut validation = jsonwebtoken::Validation::default();
@@ -294,3 +281,4 @@ mod tests {
         assert!(result.is_err());
     }
 }
+

@@ -6,6 +6,7 @@ use thiserror::Error;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "sql", derive(sqlx::Type))]
 #[cfg_attr(feature = "sql", sqlx(type_name = "ENTRYTYPE"))]
+#[derive(Default)]
 pub enum EntryType {
     // DAH_entry_id_impl
     Anime,
@@ -18,17 +19,13 @@ pub enum EntryType {
     MusicAlbumTrack,
     Franchise,
     Game,
+    #[default]
     Other,
     // Non-standard
     GenericPerson,
     GenericOrganization,
 }
 
-impl Default for EntryType {
-    fn default() -> Self {
-        Self::Other
-    }
-}
 
 #[cfg(feature = "sql")]
 pub mod sql {

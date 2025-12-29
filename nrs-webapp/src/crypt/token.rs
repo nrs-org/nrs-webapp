@@ -49,7 +49,7 @@ impl Display for Token {
     /// assert!(!s.is_empty());
     /// ```
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        BASE64_URL_SAFE_NO_PAD.encode(&self.0).fmt(f)
+        BASE64_URL_SAFE_NO_PAD.encode(self.0).fmt(f)
     }
 }
 

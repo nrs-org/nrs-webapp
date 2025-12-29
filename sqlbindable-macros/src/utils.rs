@@ -80,11 +80,10 @@ pub fn get_prop_attr(field: &Field) -> Result<PropAttr, syn::Error> {
 
                 // #[field(name=value)]
                 Meta::NameValue(nv) if nv.path.is_ident("name") => {
-                    if let Expr::Lit(exp_lit) = nv.value {
-                        if let Lit::Str(lit_str) = exp_lit.lit {
+                    if let Expr::Lit(exp_lit) = nv.value
+                        && let Lit::Str(lit_str) = exp_lit.lit {
                             name = Some(lit_str.value())
                         }
-                    }
                 }
 
                 /* ... */
