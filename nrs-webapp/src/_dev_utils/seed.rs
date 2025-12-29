@@ -7,6 +7,7 @@ use sqlx::prelude::FromRow;
 
 use crate::{
     _dev_utils::Db,
+    crypt::password_hash::PasswordHasher,
     model::{
         ModelManager,
         entity::{DbBmc, DbBmcWithPkey, ListPayload},
@@ -35,10 +36,11 @@ async fn create_test_user(mm: &mut ModelManager) -> String {
     let email = "testuser@nrs.dev".into();
     let password_clear = "password123";
 
-    // TODO: implement argon2id password hashing
-    let password_hash = format!("hashed-{}", password_clear);
+    let password_hash = PasswordHasher::get_from_config()
+        .encrypt_password(password_clear)
+        .expect("Unable to hash password");
 
-    let id = UserBmc::create_dev_user(
+    let id = UserBmc::create_user(
         mm,
         UserForCreate {
             username,
@@ -48,6 +50,10 @@ async fn create_test_user(mm: &mut ModelManager) -> String {
     )
     .await
     .expect("Unable to create test user");
+
+    UserBmc::mark_email_verified(mm, &id)
+        .await
+        .expect("Unable to verify test user email");
 
     tracing::info!(
         "{:<12} -- Created test user with ID: {}",

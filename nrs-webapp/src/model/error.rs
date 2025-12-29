@@ -15,6 +15,14 @@ pub enum Error {
 
     #[error("Entity not found: {name} with ID {id}")]
     EntityNotFound { name: &'static str, id: EntityId },
+
+    // UserBmc
+    #[error("User with given email or username already exists")]
+    EmailOrUsernameAlreadyExists,
+
+    // Token
+    #[error("Token is invalid or has expired")]
+    InvalidOrExpiredToken,
 }
 
 pub type Result<T> = core::result::Result<T, Error>;

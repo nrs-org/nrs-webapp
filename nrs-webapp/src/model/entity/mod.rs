@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use sea_query::{Expr, ExprTrait, Order, Query, ReturningClause, SimpleExpr, Value};
 use sqlbindable::{BindContext, FieldVec, HasFields, TryIntoExpr};
 
@@ -16,7 +17,7 @@ pub struct ListPayload {
 }
 
 #[allow(async_fn_in_trait)]
-pub trait DbBmc {
+pub trait DbBmc: Send {
     const TABLE_NAME: &'static str;
 
     fn not_found_error<Id: Into<EntityId>>(id: Id) -> Error {
@@ -26,7 +27,7 @@ pub trait DbBmc {
         }
     }
 
-    async fn create(ps: &mut impl PrimaryStore, create_req: impl HasFields) -> Result<()> {
+    async fn create(ps: &mut impl PrimaryStore, create_req: impl HasFields + Send) -> Result<()> {
         ps.query_with(
             Query::insert()
                 .into_table(Self::TABLE_NAME)

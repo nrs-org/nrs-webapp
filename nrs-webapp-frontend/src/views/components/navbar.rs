@@ -1,3 +1,4 @@
+use axum::http::Method;
 use heroicons::{
     Icon,
     icon_name::{Bars3, Moon, Sun},
@@ -5,12 +6,7 @@ use heroicons::{
 };
 use hypertext::prelude::*;
 
-#[component]
-fn item<'a>(label: &'a str, href: &'a str) -> impl Renderable {
-    rsx! {
-        <a role="link" hx-get=(href) hx-target="#page" hx-swap="innerHTML" hx-push-url=true>(label)</a>
-    }
-}
+use crate::views::components::link::{Link, LinkParams};
 
 #[component]
 fn theme_controller() -> impl Renderable {
@@ -37,20 +33,20 @@ pub fn navbar(logged_in: bool) -> impl Renderable {
 
                     <ul tabindex="-1" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-50 mt-3 w-52 p-2 shadow">
                         @for (label, href) in routes.iter() {
-                            <li><Item label=(label) href=(href) /></li>
+                            <li><Link params=(LinkParams{href,..Default::default()})>(label)</Link></li>
                         }
                     </ul>
                 </div>
 
-                <a class="btn btn-ghost text-xl" hx-get="/" hx-target="#page" hx-swap="innerHTML" hx-push-url=true>
+                <Link params=(LinkParams{class:"btn btn-ghost text-xl", href: "/", ..Default::default()})>
                     <span>"nrs-"<em>"webapp"</em></span>
-                </a>
+                </Link>
             </section>
 
             <section class="navbar-center hidden lg:flex">
                 <ul class="menu menu-horizontal px-1">
                     @for (label, href) in routes.iter() {
-                        <li><Item label=(label) href=(href) /></li>
+                        <li><Link params=(LinkParams{href,..Default::default()})>(label)</Link></li>
                     }
                 </ul>
             </section>
@@ -66,12 +62,12 @@ pub fn navbar(logged_in: bool) -> impl Renderable {
                         </div>
 
                         <ul tabindex="-1" class="mt-3 z-50 p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-32">
-                            <li><Item label="Profile" href="/profile" /></li>
-                            <li><a role="link" hx-post="/logoff" hx-vals="{\"logoff\":true}" hx-target="#page" hx-swap="innerHTML" hx-push-url=true>Logoff</a></li>
+                            <li><Link params=(LinkParams { href: "/profile", ..Default::default() })>Profile</Link></li>
+                            <li><Link params=(LinkParams { href: "/auth/logoff", hx_vals: "{\"logoff\":true}", method: Method::POST, ..Default::default() })>Logoff</Link></li>
                         </ul>
                     </div>
                 } @else {
-                    <a class="btn btn-primary" hx-get="/login" hx-target="#page" hx-swap="innerHTML" hx-push-url=true>Log in</a>
+                    <a class="btn btn-primary" hx-get="/auth/login" hx-target="#page" hx-swap="innerHTML" hx-push-url=true>Log in</a>
                 }
             </section>
         </header>

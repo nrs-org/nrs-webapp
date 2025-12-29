@@ -8,6 +8,7 @@ pub mod entity;
 pub mod entry;
 mod error;
 mod store;
+pub mod token;
 pub mod user;
 
 pub use error::{Error, Result};
@@ -31,7 +32,7 @@ impl ModelManager {
         &self.db
     }
 
-    pub async fn tx(&self) -> Result<Transaction<'_, SqlxDatabase>> {
+    pub async fn tx(&self) -> Result<Transaction<'static, SqlxDatabase>> {
         let tx = self.db.begin().await?;
         Ok(tx)
     }

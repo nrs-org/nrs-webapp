@@ -43,6 +43,12 @@ pub trait TryIntoExpr {
     fn into_expr(self) -> Result<Expr, TryIntoExprError>;
 }
 
+impl TryIntoExpr for Expr {
+    fn into_expr(self) -> Result<Expr, TryIntoExprError> {
+        Ok(self)
+    }
+}
+
 #[macro_export]
 macro_rules! impl_into_expr_through_value {
     ($ty:ty) => {

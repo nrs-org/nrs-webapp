@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::model::{Error, Result};
+use always_send::FutureExt;
 use sea_query::PostgresQueryBuilder;
 use sea_query_sqlx::{SqlxBinder, SqlxValues};
 use sqlx::{FromRow, PgExecutor as ExecutorTrait};
@@ -8,7 +9,7 @@ use sqlx::{FromRow, PgExecutor as ExecutorTrait};
 use crate::model::SqlxRow;
 
 // aka main DB, ie the postgres DB that currently has everything
-pub trait PrimaryStore {
+pub trait PrimaryStore: Send {
     type Executor<'a>: ExecutorTrait<'a>
     where
         Self: 'a;
@@ -58,6 +59,7 @@ impl<E> PrimaryStoreQuery<E> {
     {
         let result = sqlx::query_with(&self.sql, self.args)
             .execute(self.executor)
+            .always_send()
             .await?;
         Ok(result.rows_affected())
     }
@@ -69,6 +71,9 @@ pub struct PrimaryStoreQueryAs<E, T> {
     args: SqlxValues,
     _marker: core::marker::PhantomData<T>,
 }
+
+/// SAFETY: T is only a marker
+unsafe impl<E: Send, T> Send for PrimaryStoreQueryAs<E, T> {}
 
 impl<T, E> PrimaryStoreQueryAs<E, T> {
     pub async fn fetch_optional<'e>(self) -> Result<Option<T>>

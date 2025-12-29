@@ -74,7 +74,9 @@ async fn execute_sql(pool: &Db, sql: &str, file_path: &str) {
             sqlx::query(trimmed)
                 .execute(pool)
                 .await
-                .unwrap_or_else(|_| panic!("Failed to execute SQL command: {}", trimmed));
+                .unwrap_or_else(|e| {
+                    panic!("Error executing SQL: {e}. Original command: {}", trimmed)
+                });
         }
     }
 }
