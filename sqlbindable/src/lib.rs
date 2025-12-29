@@ -44,6 +44,16 @@ pub trait TryIntoExpr {
 }
 
 impl TryIntoExpr for Expr {
+    /// Enables using an `Expr` instance wherever `TryIntoExpr` is expected by returning the same `Expr`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sea_query::Expr;
+    ///
+    /// let result = Expr::col("id").value(1).into_expr();
+    /// assert!(result.is_ok());
+    /// ```
     fn into_expr(self) -> Result<Expr, TryIntoExprError> {
         Ok(self)
     }

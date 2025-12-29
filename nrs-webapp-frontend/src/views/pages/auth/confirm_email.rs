@@ -2,6 +2,16 @@ use hypertext::prelude::*;
 
 use super::Form;
 
+/// Render a form prompting the user to confirm their email and allowing resending the confirmation message.
+///
+/// The form has id `"confirmmail-form"`, posts to `"/auth/confirmmail/resend"`, includes a hidden `username` input with the provided value, a submit button labeled "Resend confirmation email", and a short note about possible delivery delays.
+///
+/// # Examples
+///
+/// ```
+/// let component = confirm_mail("alice@example.com".into());
+/// // `component` can be rendered by the application's rendering system
+/// ```
 pub fn confirm_mail(username: String) -> impl Renderable {
     rsx! {
         <Form form_id="confirmmail-form" title="Confirm your email" hx_post="/auth/confirmmail/resend">

@@ -28,10 +28,36 @@ impl ModelManager {
         Ok(Self { db })
     }
 
+    /// Get a reference to the manager's database pool.
+    ///
+    /// Returns a reference to the internal `Db`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// let manager: crate::model::ModelManager = todo!();
+    /// let db_ref = manager.db();
+    /// let _ = db_ref; // use the Db reference
+    /// ```
     pub(in crate::model) fn db(&self) -> &Db {
         &self.db
     }
 
+    /// Begins a new database transaction from the manager's connection pool.
+    ///
+    /// # Returns
+    ///
+    /// A `Transaction<'static, SqlxDatabase>` wrapped in `Result` on success.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example(mgr: &crate::model::ModelManager) -> Result<(), crate::model::Error> {
+    /// let mut tx = mgr.tx().await?;
+    /// // use `tx`...
+    /// Ok(())
+    /// # }
+    /// ```
     pub async fn tx(&self) -> Result<Transaction<'static, SqlxDatabase>> {
         let tx = self.db.begin().await?;
         Ok(tx)

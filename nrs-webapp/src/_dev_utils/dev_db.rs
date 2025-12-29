@@ -60,6 +60,21 @@ async fn new_db_pool(url: &str) -> Db {
         .expect("Failed to create DB pool")
 }
 
+/// Executes SQL statements from a string against the given database pool.
+///
+/// The input `sql` is split on semicolons (`;`); each non-empty, trimmed segment is executed as an individual SQL statement against `pool`. If any statement fails, this function panics with a message that includes the database error and the original statement that caused the failure.
+///
+/// Note: splitting on `;` is done naively and may not handle semicolons inside string literals, comments, or other SQL constructs.
+///
+/// # Examples
+///
+/// ```no_run
+/// # async fn doc() -> Result<(), Box<dyn std::error::Error>> {
+/// let pool = /* obtain a sqlx::Pool<Postgres> */ unimplemented!();
+/// let sql = "CREATE TABLE t(id SERIAL PRIMARY KEY); INSERT INTO t DEFAULT VALUES;";
+/// execute_sql(&pool, sql, "sql/dev_initial/00-init.sql").await;
+/// # Ok(()) }
+/// ```
 async fn execute_sql(pool: &Db, sql: &str, file_path: &str) {
     tracing::info!(
         "{:<12} -- Executing SQL from file: {}",

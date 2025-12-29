@@ -61,6 +61,19 @@ use crate::{
     validate::auth::{USERNAME_REGEX, validate_password},
 };
 
+/// Constructs a Router exposing all authentication-related endpoints and attaches the given ModelManager as shared state.
+///
+/// The returned Router nests the sub-routers for login, register, logoff, email confirmation, and password recovery
+/// under "/login", "/register", "/logoff", "/confirmmail", and "/forgotpass" respectively, with `mm` provided as the router state.
+///
+/// # Examples
+///
+/// ```no_run
+/// use nrs_webapp::routes::auth::router;
+/// // Create or obtain a ModelManager instance appropriate for your application.
+/// let mm = /* ModelManager::new(...) */ todo!();
+/// let auth_router = router(mm);
+/// ```
 pub fn router(mm: ModelManager) -> Router {
     Router::new()
         .nest("/login", login::router())

@@ -7,6 +7,21 @@ use crate::{
     crypt::jwt::JwtContext,
 };
 
+/// Middleware that attaches an authenticated Session to request extensions when a valid auth cookie is present.
+///
+/// If an auth cookie exists and the JWT verifies successfully, a `Session` constructed from the token claims
+/// is inserted into the request's extensions. The request is forwarded to the next handler regardless of
+/// whether a session was inserted; the middleware returns the response produced by the next handler.
+///
+/// # Examples
+///
+/// ```
+/// use axum::{Router, routing::get};
+/// // Mount the middleware onto a router route or the entire router.
+/// let app = Router::new()
+///     .route("/", get(|| async { "ok" }))
+///     .layer(axum::middleware::from_fn(crate::middleware::mw_req_session));
+/// ```
 pub async fn mw_req_session(jar: CookieJar, mut req: Request, next: Next) -> Response {
     tracing::debug!("{:<12} -- mw_req_session", "MIDDLEWARE");
 

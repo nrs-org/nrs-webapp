@@ -30,6 +30,19 @@ pub trait Mailer: Send + Sync {
     ) -> Result<()>;
 }
 
+/// Returns a shared, static mailer implementation chosen from application configuration.
+///
+/// The returned reference points to a singleton `Mailer` instance: if `AppConfig::RESEND_API_KEY`
+/// is set, a `ResendMailer` is used; otherwise a `LogMailer` is used.
+///
+/// # Examples
+///
+/// ```
+/// let m1 = get_mailer();
+/// let m2 = get_mailer();
+/// // both calls return the same static instance
+/// assert!(std::ptr::eq(m1, m2));
+/// ```
 pub fn get_mailer() -> &'static dyn Mailer {
     static MAILER: OnceLock<Arc<dyn Mailer>> = OnceLock::new();
     MAILER
@@ -45,6 +58,17 @@ pub fn get_mailer() -> &'static dyn Mailer {
         .as_ref()
 }
 
+/// Get the configured support email address used as the sender for account-related messages.
+///
+/// If the application configuration does not specify a support address, this returns
+/// "accounts@nrs.dev".
+///
+/// # Examples
+///
+/// ```
+/// let support = email_account_support();
+/// assert!(support.contains('@'));
+/// ```
 fn email_account_support() -> &'static str {
     AppConfig::get()
         .EMAIL_ACCOUNT_SUPPORT
@@ -52,6 +76,23 @@ fn email_account_support() -> &'static str {
         .unwrap_or("accounts@nrs.dev")
 }
 
+/// Sends an email verification message containing a confirmation link to the specified user email.
+///
+/// The message includes a generated confirmation URL that embeds the provided token and uses the configured
+/// support address as the sender.
+///
+/// # Examples
+///
+/// ```no_run
+/// # async fn run() -> nrs_webapp::Result<()> {
+/// // Construct or obtain a `Token` appropriate for email confirmation.
+/// let token = /* Token for confirmation */ unimplemented!();
+/// nrs_webapp::mail::send_email_verification_mail("user@example.com", "alice", &token).await?;
+/// # Ok(())
+/// # }
+/// ```
+///
+/// @returns `Ok(())` on success, `Err` on failure.
 pub async fn send_email_verification_mail(
     user_email: &str,
     username: &str,
@@ -75,6 +116,26 @@ pub async fn send_email_verification_mail(
     Ok(())
 }
 
+/// Sends a password-reset email to the specified user containing a link with the provided token.
+///
+/// The message uses the subject "nrs-webapp - Password Reset Request" and is sent from the configured support address.
+///
+/// # Errors
+///
+/// Returns an error if the mailer fails to send the message.
+///
+/// # Examples
+///
+/// ```no_run
+/// use nrs_webapp::mail::send_password_reset_mail;
+/// use nrs_webapp::token::Token;
+///
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// let token = Token::from("example-token");
+/// send_password_reset_mail("user@example.com", "alice", &token).await?;
+/// # Ok(())
+/// # }
+/// ```
 pub async fn send_password_reset_mail(
     user_email: &str,
     username: &str,

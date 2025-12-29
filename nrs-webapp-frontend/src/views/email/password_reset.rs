@@ -1,5 +1,18 @@
 use hypertext::prelude::*;
 
+/// Creates a renderable password-reset email fragment personalized for the given user.
+///
+/// The returned `Renderable` contains a <main> element with a greeting that includes `username`,
+/// a notice that a password reset was requested for the site, an anchor linking to `href`,
+/// and a final note instructing the recipient to ignore the message if they did not request it.
+///
+/// # Examples
+///
+/// ```
+/// let view = password_reset("alice", "https://example.com/reset");
+/// // `view` is renderable and can be passed to the renderer used by the application.
+/// let _ = view;
+/// ```
 pub fn password_reset<'a>(username: &'a str, href: &'a str) -> impl Renderable {
     rsx! {
         <main>

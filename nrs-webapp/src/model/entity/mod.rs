@@ -20,6 +20,16 @@ pub struct ListPayload {
 pub trait DbBmc: Send {
     const TABLE_NAME: &'static str;
 
+    /// Constructs an `Error::EntityNotFound` for this trait's `TABLE_NAME` using the given id.
+    ///
+    /// The provided `id` is converted into an `EntityId` and embedded in the generated error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Given a type `T` implementing `DbBmc` with TABLE_NAME = "users",
+    /// // calling `T::not_found_error(42)` produces an EntityNotFound error for id 42.
+    /// ```
     fn not_found_error<Id: Into<EntityId>>(id: Id) -> Error {
         Error::EntityNotFound {
             name: Self::TABLE_NAME,
@@ -27,6 +37,18 @@ pub trait DbBmc: Send {
         }
     }
 
+    /// Inserts a new row into the implementing table using only the fields present in `create_req`.
+    ///
+    /// Returns `Ok(())` on success; any underlying primary store errors are propagated.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # async fn example(ps: &mut impl PrimaryStore, req: impl HasFields + Send) -> Result<()> {
+    /// MyEntity::create(ps, req).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     async fn create(ps: &mut impl PrimaryStore, create_req: impl HasFields + Send) -> Result<()> {
         ps.query_with(
             Query::insert()

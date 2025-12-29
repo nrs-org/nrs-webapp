@@ -30,6 +30,22 @@ where
 {
     type Rejection = Infallible;
 
+    /// Extracts `DocProps` from HTTP request parts, using an optional `toast` query parameter and the request session.
+    ///
+    /// The extractor:
+    /// - sets `logged_in` to `true` when a `Session` is present in `parts.extensions`, `false` otherwise;
+    /// - parses an optional `toast` query parameter, converts it to a `ConstToast` via `FromStr`, and places a single converted toast in `toasts` when parsing succeeds (invalid or absent values produce an empty `toasts` vector);
+    /// - leaves all other `DocumentProps` fields as their defaults.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use axum::http::request::Parts;
+    /// use axum::extract::FromRequestParts;
+    /// // let mut parts: Parts = /* built from a request */ todo!();
+    /// // let state = /* app state */ todo!();
+    /// // let props = DocProps::from_request_parts(&mut parts, &state).await.unwrap();
+    /// ```
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         tracing::debug!("{:<12} -- DocProps", "EXTRACTOR");
 

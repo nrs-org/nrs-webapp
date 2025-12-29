@@ -54,12 +54,39 @@ use crate::{
     validate::auth::{USERNAME_REGEX, validate_password},
 };
 
+/// Creates a Router configured with the forgot-password endpoints.
+///
+/// The router mounts:
+/// - `GET /` and `POST /` for requesting a password reset (email submission).
+/// - `GET /reset` and `POST /reset` for rendering and submitting a password reset using a token.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// let router = router();
+/// // mount into an Axum application, e.g. `Router::new().merge(router)`
+/// ```
 pub fn router() -> Router<ModelManager> {
     Router::new()
         .route("/", get(email_page).post(email_submit))
         .route("/reset", get(reset_page).post(reset_submit))
 }
 
+/// Render the forgot-password page, adapting output for HTMX requests.
+///
+/// Uses the provided document properties and HTMX request context to produce the
+/// appropriate HTML response (full page or HTMX fragment).
+///
+/// # Returns
+///
+/// A response rendering the forgot-password page; HTMX requests receive an HTMX-compatible fragment.
+///
+/// # Examples
+///
+/// ```no_run
+/// // Called by the router; shown here for illustration only.
+/// // let resp = email_page(hx_req, DocProps(props)).await;
+/// ```
 async fn email_page(hx_req: HxRequest, DocProps(props): DocProps) -> impl IntoResponse {
     tracing::debug!("{:<12} -- GET auth::forgot_pass", "ROUTE");
     maybe_document(hx_req, props, forgot_pass())
@@ -70,6 +97,17 @@ struct ResetPasswordQuery {
     token: String,
 }
 
+/// Render the password reset page for a given reset token.
+///
+/// Embeds the provided token into the reset-password page and returns an HTMX-aware response
+/// suitable for full or partial (HTMX) rendering.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// // render page for token "abc123"
+/// let resp = reset_page(hx_req, DocProps(props), WRQuery(ResetPasswordQuery { token: "abc123".into() })).await;
+/// ```
 async fn reset_page(
     hx_req: HxRequest,
     DocProps(props): DocProps,
@@ -85,6 +123,23 @@ struct EmailSubmitPayload {
     email: String,
 }
 
+/// Handles the forgot-password form submission by enqueueing a background task to send a password-reset link
+/// and returning the "forgot password sent" page.
+///
+/// The handler extracts the submitted email, client IP, user agent, and a model manager, spawns an
+/// asynchronous task to send the reset link, and immediately responds with the confirmation page.
+///
+/// # Returns
+///
+/// The HTTP response for the forgot-password confirmation page.
+///
+/// # Examples
+///
+/// ```
+/// use axum::routing::post;
+/// // assuming `email_submit` and `router` are in scope
+/// let app = router().route("/forgot", post(email_submit));
+/// ```
 async fn email_submit(
     DocProps(props): DocProps,
     State(mut mm): State<ModelManager>,
@@ -105,6 +160,19 @@ struct ResetPasswordSubmitPayload {
     password: String,
 }
 
+/// Handle a password-reset form submission: validate and consume the reset token, update the user's password inside a transaction, commit, and redirect the client to the login page with a toast indicating they must sign in again.
+///
+/// On success, returns a response that pushes the login URL to the client and redirects to the login page with a toast informing the user to log in again.
+///
+/// # Examples
+///
+/// ```
+/// # use axum::response::Redirect;
+/// # use some_crate::HxPushUrl;
+/// // The handler returns a push + redirect that navigates the client to the login page
+/// let url = format!("/auth/login?{}", /* toast_on_page_load!(ConstToast::LoginAgainAfterPasswordReset) */ "toast=login_again");
+/// let resp = (HxPushUrl("/auth/login".into()), Redirect::to(&url));
+/// ```
 async fn reset_submit(
     DocProps(props): DocProps,
     State(mut mm): State<ModelManager>,
@@ -137,6 +205,19 @@ async fn reset_submit(
     Ok((HxPushUrl("/auth/login".into()), Redirect::to(&url)))
 }
 
+/// Attempts to send a password-reset link for the specified username and logs an error if the operation fails.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::net::IpAddr;
+/// # async fn example() {
+/// let mm = /* obtain ModelManager */ unimplemented!();
+/// let ip: IpAddr = "127.0.0.1".parse().unwrap();
+/// let ua = /* construct a UserAgent */ unimplemented!();
+/// send_reset_password_link(mm, "alice@example.com".to_string(), ip, ua).await;
+/// # }
+/// ```
 async fn send_reset_password_link(
     mm: ModelManager,
     username: String,
@@ -161,6 +242,43 @@ struct UserIdNameEmailVerifiedAt {
     email_verified_at: Option<OffsetDateTime>,
 }
 
+/// Send a password-reset link to a verified user identified by `email`.
+///
+/// This function enforces a per-email rate limit (5 requests per minute), generates a one-time
+/// password-reset token, stores a hashed token record with metadata in the database, commits the
+/// transaction, and sends the reset email. If no user with a verified email is found, no email is
+/// sent and the function returns `Ok(())`.
+///
+/// # Errors
+///
+/// Returns an error if the rate limit is exceeded (`Error::RateLimitExceeded`) or if token
+/// generation, database operations, or email delivery fail.
+///
+/// # Parameters
+///
+/// - `mm`: Model manager used to start a database transaction and perform data operations.
+/// - `email`: Recipient email address to look up and (if verified) to send the reset link to.
+/// - `ip_addr`: Request IP address to record with the one-time token metadata.
+/// - `user_agent`: Request user-agent string to record with the one-time token metadata.
+///
+/// # Returns
+///
+/// `Ok(())` on success; `Err(...)` on failure.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::net::IpAddr;
+/// # async fn doc_example(mm: crate::ModelManager) -> anyhow::Result<()> {
+/// let email = "user@example.com".to_string();
+/// let ip_addr: IpAddr = "127.0.0.1".parse().unwrap();
+/// let user_agent = "example-agent/1.0".to_string();
+///
+/// // Call from an async context
+/// send_reset_password_link_inner(mm, email, ip_addr, user_agent).await?;
+/// # Ok(())
+/// # }
+/// ```
 async fn send_reset_password_link_inner(
     mm: ModelManager,
     email: String,

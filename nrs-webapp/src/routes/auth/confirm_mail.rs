@@ -51,12 +51,43 @@ use crate::{
     validate::auth::{USERNAME_REGEX, validate_password},
 };
 
+/// Creates the HTTP router for the confirm-email endpoints.
+///
+/// The router exposes:
+/// - GET "/" -> renders the confirm-mail page
+/// - POST "/" -> triggers resending the confirmation email
+/// - GET "/confirm" -> consumes an email verification token and finalizes confirmation
+///
+/// # Examples
+///
+/// ```
+/// let _router = nrs_webapp::routes::auth::confirm_mail::router();
+/// ```
 pub fn router() -> Router<ModelManager> {
     Router::new()
         .route("/", get(confirm_page).post(resend_mail))
         .route("/confirm", get(confirm_submit))
 }
 
+/// Redirects the client to the confirm-mail page for a username and starts sending the confirmation email in the background.
+///
+/// The client receives an HTMX redirect with HTTP status 204 No Content that points to `/auth/confirmmail?username=<encoded>`.
+///
+/// # Examples
+///
+/// ```
+/// use std::net::IpAddr;
+/// use axum::response::Response;
+/// use http::StatusCode;
+/// // Construct or obtain a ModelManager and UserAgent in real usage.
+/// let mm = /* ModelManager */ unimplemented!();
+/// let username = "alice".to_string();
+/// let ip_addr: IpAddr = "127.0.0.1".parse().unwrap();
+/// let user_agent = /* UserAgent */ unimplemented!();
+///
+/// let resp: Response = redirect_to_confirm_mail_page(mm, username, ip_addr, user_agent);
+/// assert_eq!(resp.status(), StatusCode::NO_CONTENT);
+/// ```
 pub fn redirect_to_confirm_mail_page(
     mm: ModelManager,
     username: String,
@@ -77,6 +108,21 @@ struct ConfirmPagePayload {
     username: String,
 }
 
+/// Render the email confirmation page for the given username, returning an HTTP response
+/// appropriate for either a full-page request or an HTMX request.
+///
+/// The handler uses the provided ModelManager and documentation properties to produce the
+/// confirmation page; when the request is an HTMX request it will return the corresponding
+/// HTMX response.
+///
+/// # Examples
+///
+/// ```
+/// use axum::{routing::get, Router};
+///
+/// // mount the handler at the root of a router
+/// let app = Router::new().route("/", get(crate::routes::auth::confirm_mail::confirm_page));
+/// ```
 async fn confirm_page(
     hx_req: HxRequest,
     State(mm): State<ModelManager>,
@@ -93,6 +139,20 @@ struct ConfirmSubmitPayload {
     token: String,
 }
 
+/// Handle a POST of an email confirmation token, verify the token, mark the user's email as verified, and redirect to the login page with a toast.
+///
+/// On success this function consumes the provided one-time email verification token, marks the associated user's email as verified within a database transaction, commits the transaction, and returns a response that pushes an HTMX URL and redirects the client to the login page with a toast message.
+///
+/// # Returns
+/// `Ok` containing a combined HTMX push and an HTTP redirect to the login page on success; an error if token parsing, token verification/consumption, database operations, or transaction commit fail.
+///
+/// # Examples
+///
+/// ```
+/// // Example usage (handler functions are normally invoked by the web framework):
+/// // let res = confirm_submit(state, client_ip, user_agent_header, WRQuery(ConfirmSubmitPayload { token: "..." .into() })).await;
+/// // assert!(res.is_ok());
+/// ```
 async fn confirm_submit(
     State(mut mm): State<ModelManager>,
     ClientIp(ip_addr): ClientIp,
@@ -124,6 +184,20 @@ async fn confirm_submit(
     Ok((HxPushUrl("/auth/login".into()), Redirect::to(&url)))
 }
 
+/// Triggers sending a confirmation email for the given username in the background and returns an HTMX push response with HTTP 204.
+///
+/// This handler spawns an asynchronous task to (re)send the confirmation email for `username` and immediately responds with an HTMX push payload of `"false"` and status `204 No Content`.
+///
+/// # Examples
+///
+/// ```
+/// # use std::net::IpAddr;
+/// # use tokio;
+/// # async fn example(mm: crate::model::ModelManager, username: String, ip_addr: IpAddr, ua: crate::http::UserAgent) {
+/// // Equivalent effect: spawn the background email send task.
+/// tokio::spawn(crate::routes::auth::confirm_mail::send_confirm_mail(mm, username, ip_addr, ua));
+/// # }
+/// ```
 async fn resend_mail(
     State(mm): State<ModelManager>,
     ClientIp(ip_addr): ClientIp,
@@ -136,6 +210,31 @@ async fn resend_mail(
     (HxPushUrl("false".into()), StatusCode::NO_CONTENT)
 }
 
+/// Sends a confirmation email for the given username and logs an error if delivery fails.
+///
+/// This function triggers the internal email-sending workflow and suppresses any error by
+/// logging it; it does not return error information to the caller.
+///
+/// # Parameters
+///
+/// - `mm`: Application model manager used to access persistence and configuration.
+/// - `username`: Username identifying the account to which the confirmation email should be sent.
+/// - `ip_addr`: Client IP address associated with the request that triggered the email.
+/// - `user_agent`: User agent string associated with the request.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::net::IpAddr;
+/// // Assume `mm`, `username`, and `user_agent` are available in scope.
+/// // let mm = /* ModelManager */ ;
+/// // let username = "alice".to_string();
+/// // let ip_addr: IpAddr = "127.0.0.1".parse().unwrap();
+/// // let user_agent = /* UserAgent */ ;
+///
+/// // Spawn the async send without awaiting its result:
+/// tokio::spawn(send_confirm_mail(mm, username, ip_addr, user_agent));
+/// ```
 async fn send_confirm_mail(
     mm: ModelManager,
     username: String,
@@ -159,6 +258,33 @@ struct UserIdEmail {
     email_verified_at: Option<OffsetDateTime>,
 }
 
+/// Sends an email verification token to the given username if that user exists and their email is not yet verified.
+///
+/// This function enforces a per-username rate limit, generates and stores a one-time verification token with an expiry,
+/// and attempts to deliver a verification email to the user's address. If no unverified user is found for the given
+/// username the function completes successfully without sending mail.
+///
+/// # Errors
+///
+/// Returns an error if rate limiting prevents the request, token generation or hashing fails, database operations fail,
+/// or email delivery fails.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::net::IpAddr;
+///
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// // Obtain a ModelManager `mm`, e.g. from your application state.
+/// let mm = /* ModelManager instance */ unimplemented!();
+/// let username = "alice".to_string();
+/// let ip_addr: IpAddr = "127.0.0.1".parse().unwrap();
+/// let user_agent = "example-agent".to_string();
+///
+/// // Attempt to send a confirmation email (may return an application Error).
+/// let _ = nrs_webapp::routes::auth::confirm_mail::send_confirm_email_inner(mm, username, ip_addr, user_agent).await?;
+/// # Ok(()) }
+/// ```
 async fn send_confirm_email_inner(
     mm: ModelManager,
     username: String,

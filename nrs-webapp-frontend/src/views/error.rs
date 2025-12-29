@@ -17,6 +17,26 @@ pub struct ClientError {
 }
 
 impl From<ClientError> for Toast {
+    /// Convert a `ClientError` into a `Toast` that represents an error notification.
+    ///
+    /// The resulting `Toast` uses `ToastKind::Error`, takes the `title` from the error,
+    /// and composes the `description` by appending the request UUID as an "Error ID".
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::views::error::ClientError;
+    /// use crate::views::toast::Toast;
+    ///
+    /// let err = ClientError {
+    ///     title: "Failure".into(),
+    ///     description: "Something went wrong".into(),
+    ///     req_uuid: "abc-123".into(),
+    /// };
+    /// let toast: Toast = err.into();
+    /// assert_eq!(toast.title, "Failure");
+    /// assert!(toast.description.contains("Error ID: abc-123"));
+    /// ```
     fn from(value: ClientError) -> Self {
         Self {
             kind: ToastKind::Error,
@@ -26,6 +46,25 @@ impl From<ClientError> for Toast {
     }
 }
 
+/// Render a full error page showing the provided ClientError message.
+///
+/// The returned renderable is a Document configured for an error state and
+/// displays the error title, description, and a "Go Back" button.
+///
+/// # Examples
+///
+/// ```no_run
+/// use crate::views::error::{ClientError, error_page};
+/// use crate::views::document::DocumentProps;
+///
+/// let error = ClientError {
+///     title: "Not Found".into(),
+///     description: "The requested resource could not be found.".into(),
+///     req_uuid: "req-123".into(),
+/// };
+/// let props = DocumentProps::default();
+/// let _renderable = error_page(&error, &props);
+/// ```
 pub fn error_page(error: &ClientError, props: &DocumentProps) -> impl Renderable {
     rsx! {
         <Document props=(DocumentProps {error: true, toasts: vec![], ..props.clone()})>
@@ -39,6 +78,20 @@ pub fn error_page(error: &ClientError, props: &DocumentProps) -> impl Renderable
     }
 }
 
+/// Render an error response, using a toast when the request is an HTMX request and a full error page otherwise.
+///
+/// The function returns HTMX response hints (optional `HxReswap` and `HxPushUrl`) together with the HTML fragment to send as the response body. When `hx_req` is true the returned HTML is a toast built from the provided `ClientError`; otherwise it is the full error page rendered with the provided `DocumentProps`.
+///
+/// # Returns
+///
+/// `(Option<HxReswap>, Option<HxPushUrl>, impl Renderable)` where the first two elements are HTMX hints to control swapping and URL push behavior, and the third element is the HTML fragment to include in the response.
+///
+/// # Examples
+///
+/// ```no_run
+/// // `hx_req`, `props`, and `client_error` are provided by the application context.
+/// let (_reswap, _push_url, _html) = error(HxRequest(false), &props, &client_error);
+/// ```
 pub fn error(
     HxRequest(hx_req): HxRequest,
     props: &DocumentProps,

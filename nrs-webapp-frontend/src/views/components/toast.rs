@@ -14,6 +14,22 @@ pub enum ToastKind {
 }
 
 impl ToastKind {
+    /// Get the CSS alert class name for the toast kind.
+    ///
+    /// # Returns
+    ///
+    /// `&'static str` CSS class name corresponding to the variant:
+    /// - `ToastKind::Info` => `"alert-info"`
+    /// - `ToastKind::Success` => `"alert-success"`
+    /// - `ToastKind::Warning` => `"alert-warning"`
+    /// - `ToastKind::Error` => `"alert-error"`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let cls = ToastKind::Success.alert_class();
+    /// assert_eq!(cls, "alert-success");
+    /// ```
     pub fn alert_class(&self) -> &'static str {
         match self {
             ToastKind::Info => "alert-info",
@@ -31,6 +47,19 @@ pub struct Toast {
     pub kind: ToastKind,
 }
 
+/// Renders the appropriate solid heroicon for the given toast kind.
+///
+/// Icons selected:
+/// - `ToastKind::Info` -> `InformationCircle`
+/// - `ToastKind::Success` -> `CheckCircle`
+/// - `ToastKind::Warning` -> `ExclamationTriangle`
+/// - `ToastKind::Error` -> `ExclamationCircle`
+///
+/// # Examples
+///
+/// ```
+/// let _icon = toast_icon(ToastKind::Info);
+/// ```
 #[component]
 fn toast_icon(kind: ToastKind) -> impl Renderable {
     rsx! {
@@ -43,6 +72,31 @@ fn toast_icon(kind: ToastKind) -> impl Renderable {
     }
 }
 
+/// Renders a dismissible toast notification with icon, title, description, auto-close behavior, and progress indicator.
+///
+/// The returned component produces a styled alert inserted into `#toast-root`, shows an icon based on the toast's `kind`,
+/// and automatically closes after a short duration while also allowing manual dismissal via a close button. The toast's
+/// description is rendered as trusted HTML.
+///
+/// # Returns
+///
+/// A renderable toast component that produces the described notification UI.
+///
+/// # Examples
+///
+/// ```
+/// use nrs_webapp_frontend::views::components::toast::{Toast, ToastKind, toast_component};
+/// use hypertext::Rendered;
+///
+/// let toast = Toast {
+///     title: "Saved".into(),
+///     description: Rendered::from("<strong>Your changes were saved.</strong>".to_string()),
+///     kind: ToastKind::Success,
+/// };
+///
+/// // Render or embed the component into your view
+/// let _component = toast_component(&toast);
+/// ```
 #[component]
 pub fn toast_component<'a>(toast: &'a Toast) -> impl Renderable {
     let fade_out_duration_ms = 300;
@@ -82,6 +136,21 @@ pub fn toast_component<'a>(toast: &'a Toast) -> impl Renderable {
 }
 
 impl Renderable for Toast {
+    /// Renders this toast into the provided HTML buffer.
+    ///
+    /// The buffer will receive the toast's HTML representation so it can be inserted into the page.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut buf = hypertext::Buffer::new();
+    /// let toast = Toast {
+    ///     title: "Saved".into(),
+    ///     description: Rendered::from("Your changes have been saved.".into()),
+    ///     kind: ToastKind::Success,
+    /// };
+    /// toast.render_to(&mut buf);
+    /// ```
     fn render_to(&self, buffer: &mut hypertext::Buffer<hypertext::context::Node>) {
         toast_component(self).render_to(buffer);
     }

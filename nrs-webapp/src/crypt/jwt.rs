@@ -27,6 +27,18 @@ pub struct JwtContext {
 }
 
 impl JwtContext {
+    /// Constructs a JwtContext from a raw secret and a token expiry duration.
+    ///
+    /// The provided `secret` is used to derive both the encoding (signing) and decoding (verification) keys. `expiry_duration` is the length of time added to the issued-at time to produce the token expiry timestamp.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nrs_webapp::crypt::jwt::JwtContext;
+    /// use time::Duration;
+    ///
+    /// let ctx = JwtContext::new(b"my-secret", Duration::hours(1));
+    /// ```
     pub fn new(secret: &'static [u8], expiry_duration: Duration) -> Self {
         Self {
             decoding_key: DecodingKey::from_secret(secret),
@@ -35,6 +47,17 @@ impl JwtContext {
         }
     }
 
+    /// Get a reference to the global `JwtContext` configured from application settings.
+    ///
+    /// The context is initialized once on first use using `SERVICE_JWT_EXPIRY_DURATION` (as a `time::Duration`)
+    /// and `SERVICE_JWT_SECRET` from `AppConfig`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let ctx = JwtContext::get_from_config();
+    /// let claims = ctx.generate_claims("user-123".into());
+    /// ```
     pub fn get_from_config() -> &'static Self {
         static SIGNER: OnceLock<JwtContext> = OnceLock::new();
         SIGNER.get_or_init(|| {
@@ -45,6 +68,25 @@ impl JwtContext {
         })
     }
 
+    /// Constructs JWT claims for the given user using this context's configuration.
+    ///
+    /// The returned `JwtClaims` sets:
+    /// - issuer (`iss`) to `"nrs-webapp"`,
+    /// - audience (`aud`) to `"nrs-webapp-users"`,
+    /// - subject (`sub`) to the provided `user_id`,
+    /// - issued-at (`iat`) to the current UTC time,
+    /// - expiration (`exp`) to `iat + self.expiry_duration`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use time::Duration;
+    /// let ctx = JwtContext::new(b"secret", Duration::minutes(15));
+    /// let claims = ctx.generate_claims("user-123".to_string());
+    /// assert_eq!(claims.sub, "user-123");
+    /// ```
+    ///
+    /// Returns the populated `JwtClaims` with `sub` equal to the given `user_id`, `iat` set to now, and `exp` set to now plus the context's expiry duration.
     pub fn generate_claims(&self, user_id: String) -> JwtClaims {
         let now = OffsetDateTime::now_utc();
         JwtClaims {
@@ -56,6 +98,20 @@ impl JwtContext {
         }
     }
 
+    /// Signs the provided JWT claims and returns a compact JWT string.
+    ///
+    /// Returns the signed JWT as a compact (dot-separated) string on success.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use nrs_webapp::crypt::jwt::{JwtContext};
+    /// # use time::Duration;
+    /// let ctx = JwtContext::new(b"secret", Duration::days(1));
+    /// let claims = ctx.generate_claims("user123".to_string());
+    /// let token = ctx.sign(&claims).unwrap();
+    /// assert!(!token.is_empty());
+    /// ```
     pub fn sign(&self, claims: &JwtClaims) -> Result<String> {
         Ok(jsonwebtoken::encode(
             &Default::default(),
@@ -64,6 +120,33 @@ impl JwtContext {
         )?)
     }
 
+    /// Verifies a JWT string and decodes its `JwtClaims`.
+    
+    ///
+    
+    /// The token's signature, audience ("nrs-webapp-users"), and standard time-based claims (e.g., expiration)
+    
+    /// are validated according to the jsonwebtoken validation rules. Returns an error if validation or decoding fails.
+    
+    ///
+    
+    /// # Examples
+    
+    ///
+    
+    /// ```
+    
+    /// let ctx = JwtContext::new(b"secret", time::Duration::minutes(60));
+    
+    /// let claims = ctx.generate_claims("user-123".to_string());
+    
+    /// let token = ctx.sign(&claims).unwrap();
+    
+    /// let decoded = ctx.verify(&token).unwrap();
+    
+    /// assert_eq!(decoded.claims.sub, "user-123");
+    
+    /// ```
     pub fn verify(&self, token: &str) -> Result<TokenData<JwtClaims>> {
         let mut validation = jsonwebtoken::Validation::default();
         validation.set_audience(&["nrs-webapp-users"]);
@@ -111,6 +194,20 @@ mod tests {
     }
 
     // jwt discard nanosecond timings, so we allow up to 1s difference
+    /// Asserts that two `OffsetDateTime` values differ by at most one second.
+    ///
+    /// Panics if the absolute difference between `a` and `b` is greater than one second.
+    /// Useful in tests that compare timestamps with small permitted clock skew.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use time::{Duration, OffsetDateTime};
+    ///
+    /// let now = OffsetDateTime::now_utc();
+    /// let nearly_now = now + Duration::milliseconds(500);
+    /// assert_same_jwt_second(now, nearly_now);
+    /// ```
     fn assert_same_jwt_second(a: OffsetDateTime, b: OffsetDateTime) {
         let diff = (a - b).abs();
         assert!(
@@ -136,6 +233,17 @@ mod tests {
         assert_same_jwt_second(decoded_claims.exp, claims.exp);
     }
 
+    /// Ensures that a token signed with one secret cannot be verified with a different secret.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let ctx_good = ctx(b"correct-secret", Duration::minutes(10));
+    /// let ctx_bad = ctx(b"wrong-secret", Duration::minutes(10));
+    /// let claims = ctx_good.generate_claims("user-x".to_string());
+    /// let token = ctx_good.sign(&claims).unwrap();
+    /// assert!(ctx_bad.verify(&token).is_err());
+    /// ```
     #[test]
     fn verify_fails_with_wrong_secret() {
         let ctx_good = ctx(b"correct-secret", Duration::minutes(10));

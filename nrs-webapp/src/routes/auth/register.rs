@@ -56,10 +56,38 @@ use crate::{
     validate::auth::{USERNAME_REGEX, validate_password},
 };
 
+/// Builds a Router<ModelManager> configured with the registration routes.
+///
+/// The router contains a GET "/" route that serves the registration page.
+///
+/// # Examples
+///
+/// ```
+/// let r = nrs_webapp::routes::auth::register::router();
+/// // mount `r` into your axum application
+/// ```
 pub fn router() -> Router<ModelManager> {
     Router::new().route("/", get(page))
 }
 
+/// Render the registration page using the provided document props and HTMX request.
+///
+/// This handler produces an HTTP response containing the registration page; the response
+/// may be a full HTML document or an HTMX fragment depending on the `HxRequest`.
+///
+/// # Examples
+///
+/// ```no_run
+/// use nrs_webapp::routes::auth::register::page;
+/// use nrs_webapp::http::{HxRequest, DocProps};
+///
+/// // hypothetical usage within an async context — types are provided by the application.
+/// # async fn run() {
+/// let hx_req: HxRequest = /* obtain or construct HxRequest */;
+/// let props = /* construct document props */;
+/// let resp = page(hx_req, DocProps(props)).await;
+/// # }
+/// ```
 async fn page(hx_req: HxRequest, DocProps(props): DocProps) -> impl IntoResponse {
     tracing::debug!("{:<12} -- GET auth::register", "ROUTE");
     maybe_document(hx_req, props, register())
@@ -75,6 +103,17 @@ struct RegisterPayload {
     password: String,
 }
 
+/// Handles POST submissions of the registration form: validates input, hashes the password, creates a new user, and returns a redirect to the email confirmation page on success.
+///
+/// On success this function persists a new user (username, email, hashed password) and returns a response that redirects the client to the confirmation-mail page. Errors from hashing or persistence are propagated via the returned `Result`.
+///
+/// # Examples
+///
+/// ```no_run
+/// // This illustrates the intended outcome: submitting valid registration data
+/// // results in a redirect response to the confirmation page.
+/// // Integration tests should construct an HTTP request and assert the redirect target.
+/// ```
 async fn submit(
     HxRequest(hx_req): HxRequest,
     State(mut mm): State<ModelManager>,

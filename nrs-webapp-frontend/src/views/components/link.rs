@@ -9,6 +9,27 @@ pub struct LinkParams<'a> {
     pub method: Method,
 }
 
+/// Renders an anchor (<a>) configured for htmx-driven navigation.
+///
+/// The anchor uses `params.class` for CSS classes, `params.hx_vals` for htmx values,
+/// and targets `#page` with `hx-swap="innerHTML"` and `hx-push-url=true`. It sets
+/// `hx-get` to `params.href` when `params.method` is `Method::GET`, or `hx-post` to
+/// `params.href` when `params.method` is `Method::POST`.
+///
+/// # Examples
+///
+/// ```
+/// use axum::http::Method;
+///
+/// let params = LinkParams {
+///     href: "/items",
+///     class: "nav-link",
+///     hx_vals: "{}",
+///     method: Method::GET,
+/// };
+///
+/// let node = link(&"Open items", &params);
+/// ```
 #[component]
 pub fn link<'a, R: Renderable>(children: &R, params: &LinkParams<'a>) -> impl Renderable {
     // TODO: add more if needed

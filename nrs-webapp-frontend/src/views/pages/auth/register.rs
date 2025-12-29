@@ -3,6 +3,17 @@ use hypertext::prelude::*;
 use super::Form;
 use crate::views::components::link::{Link, LinkParams};
 
+/// Render the sign-up form UI fragment.
+///
+/// The fragment contains username, email, password, and password confirmation inputs with
+/// client-side validation attributes and hints, a "Register" submit button, and a link
+/// back to the login page.
+///
+/// # Examples
+///
+/// ```
+/// let _fragment = register();
+/// ```
 pub fn register() -> impl Renderable {
     rsx! {
         <Form form_id="signup-form" title="Sign up" hx_post="/auth/register">
