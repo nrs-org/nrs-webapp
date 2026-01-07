@@ -27,6 +27,7 @@ impl ToastKind {
     /// # Examples
     ///
     /// ```
+    /// use nrs_webapp_frontend::views::components::toast::ToastKind;
     /// let cls = ToastKind::Success.alert_class();
     /// assert_eq!(cls, "alert-success");
     /// ```
@@ -54,12 +55,6 @@ pub struct Toast {
 /// - `ToastKind::Success` -> `CheckCircle`
 /// - `ToastKind::Warning` -> `ExclamationTriangle`
 /// - `ToastKind::Error` -> `ExclamationCircle`
-///
-/// # Examples
-///
-/// ```
-/// let _icon = toast_icon(ToastKind::Info);
-/// ```
 #[component]
 fn toast_icon(kind: ToastKind) -> impl Renderable {
     rsx! {
@@ -85,17 +80,17 @@ fn toast_icon(kind: ToastKind) -> impl Renderable {
 /// # Examples
 ///
 /// ```
-/// use nrs_webapp_frontend::views::components::toast::{Toast, ToastKind, toast_component};
-/// use hypertext::Rendered;
+/// use nrs_webapp_frontend::views::components::toast::{Toast, ToastKind, ToastComponent};
+/// use hypertext::prelude::*;
 ///
 /// let toast = Toast {
 ///     title: "Saved".into(),
-///     description: Rendered::from("<strong>Your changes were saved.</strong>".to_string()),
+///     description: rsx! { <strong>"Your changes were saved."</strong> }.render(),
 ///     kind: ToastKind::Success,
 /// };
 ///
 /// // Render or embed the component into your view
-/// let _component = toast_component(&toast);
+/// let _component = rsx!{<ToastComponent toast=(&toast) />};
 /// ```
 #[component]
 pub fn toast_component<'a>(toast: &'a Toast) -> impl Renderable {
@@ -143,13 +138,15 @@ impl Renderable for Toast {
     /// # Examples
     ///
     /// ```
-    /// let mut buf = hypertext::Buffer::new();
+    /// use nrs_webapp_frontend::views::components::toast::{Toast, ToastKind};
+    /// use hypertext::{Rendered, Raw, Renderable, prelude::*};
+    ///
     /// let toast = Toast {
     ///     title: "Saved".into(),
-    ///     description: Rendered::from("Your changes have been saved.".into()),
+    ///     description: rsx! { <strong>"Your changes were saved."</strong> }.render(),
     ///     kind: ToastKind::Success,
     /// };
-    /// toast.render_to(&mut buf);
+    /// let _toast_html = toast.render();
     /// ```
     fn render_to(&self, buffer: &mut hypertext::Buffer<hypertext::context::Node>) {
         toast_component(self).render_to(buffer);

@@ -9,6 +9,7 @@ use super::Form;
 /// # Examples
 ///
 /// ```
+/// use nrs_webapp_frontend::views::pages::auth::confirm_email::confirm_mail;
 /// let component = confirm_mail("alice@example.com".into());
 /// // `component` can be rendered by the application's rendering system
 /// ```

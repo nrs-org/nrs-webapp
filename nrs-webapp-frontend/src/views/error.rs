@@ -25,8 +25,8 @@ impl From<ClientError> for Toast {
     /// # Examples
     ///
     /// ```
-    /// use crate::views::error::ClientError;
-    /// use crate::views::toast::Toast;
+    /// use nrs_webapp_frontend::views::error::ClientError;
+    /// use nrs_webapp_frontend::views::components::toast::Toast;
     ///
     /// let err = ClientError {
     ///     title: "Failure".into(),
@@ -35,7 +35,7 @@ impl From<ClientError> for Toast {
     /// };
     /// let toast: Toast = err.into();
     /// assert_eq!(toast.title, "Failure");
-    /// assert!(toast.description.contains("Error ID: abc-123"));
+    /// assert!(toast.description.into_inner().contains("Error ID: abc-123"));
     /// ```
     fn from(value: ClientError) -> Self {
         Self {
@@ -54,8 +54,8 @@ impl From<ClientError> for Toast {
 /// # Examples
 ///
 /// ```no_run
-/// use crate::views::error::{ClientError, error_page};
-/// use crate::views::document::DocumentProps;
+/// use nrs_webapp_frontend::views::error::{ClientError, error_page};
+/// use nrs_webapp_frontend::views::document::DocumentProps;
 ///
 /// let error = ClientError {
 ///     title: "Not Found".into(),
@@ -89,8 +89,20 @@ pub fn error_page(error: &ClientError, props: &DocumentProps) -> impl Renderable
 /// # Examples
 ///
 /// ```no_run
+/// use nrs_webapp_frontend::views::error::{ClientError, error};
+/// use nrs_webapp_frontend::views::document::DocumentProps;
+/// use axum_htmx::HxRequest;
+/// use hypertext::prelude::*;
+///
+/// let client_error = ClientError {
+///    title: "Server Error".into(),
+///    description: "An unexpected error occurred.".into(),
+///    req_uuid: "req-456".into(),
+/// };
+/// let props = DocumentProps::default();
+///
 /// // `hx_req`, `props`, and `client_error` are provided by the application context.
-/// let (_reswap, _push_url, _html) = error(HxRequest(false), &props, &client_error);
+/// let _html = error(HxRequest(false), &props, &client_error);
 /// ```
 pub fn error(
     HxRequest(hx_req): HxRequest,

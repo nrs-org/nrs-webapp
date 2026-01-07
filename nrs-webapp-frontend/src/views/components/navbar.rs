@@ -13,13 +13,6 @@ use crate::views::components::link::{Link, LinkParams};
 /// The component emits a hidden checkbox (value `"night"`) and two Icon elements
 /// whose visibility toggles via the surrounding "swap" classes; intended to be
 /// used as a UI hook for switching light/dark theme states.
-///
-/// # Examples
-///
-/// ```
-/// // Instantiate the component in a parent view
-/// let _component = theme_controller();
-/// ```
 #[component]
 fn theme_controller() -> impl Renderable {
     rsx! {
@@ -46,8 +39,11 @@ fn theme_controller() -> impl Renderable {
 /// # Examples
 ///
 /// ```
-/// // Render the navbar for an anonymous user
-/// let _ = navbar(false);
+/// use hypertext::prelude::*;
+/// use nrs_webapp_frontend::views::components::navbar::Navbar;
+/// let navbar_view = rsx! {
+///   <Navbar logged_in=(false) />
+/// };
 /// ```
 #[component]
 pub fn navbar(logged_in: bool) -> impl Renderable {

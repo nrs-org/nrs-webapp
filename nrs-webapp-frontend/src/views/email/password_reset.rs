@@ -9,9 +9,9 @@ use hypertext::prelude::*;
 /// # Examples
 ///
 /// ```
-/// let view = password_reset("alice", "https://example.com/reset");
-/// // `view` is renderable and can be passed to the renderer used by the application.
-/// let _ = view;
+/// use hypertext::prelude::*;
+/// use nrs_webapp_frontend::views::email::password_reset::password_reset;
+/// let _view = password_reset("alice", "https://example.com/reset");
 /// ```
 pub fn password_reset<'a>(username: &'a str, href: &'a str) -> impl Renderable {
     rsx! {

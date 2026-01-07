@@ -12,6 +12,7 @@ use crate::views::components::link::{Link, LinkParams};
 /// # Examples
 ///
 /// ```
+/// use nrs_webapp_frontend::views::pages::auth::register::register;
 /// let _fragment = register();
 /// ```
 pub fn register() -> impl Renderable {

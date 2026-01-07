@@ -16,18 +16,6 @@ pub mod register;
 /// - `title` — legend text; when empty no `legend` element is rendered.
 /// - `hx_post` — value for the `hx-post` attribute; use an empty string to omit the attribute.
 /// - `children` — renderable content placed inside the fieldset.
-///
-/// # Examples
-///
-/// ```
-/// # use dioxus_core::prelude::*;
-/// rsx! {
-///     form("login_form", "Sign in", "/auth/login", &rsx!{
-///         input { r#type: "text", name: "username" }
-///         input { r#type: "password", name: "password" }
-///     })
-/// }
-/// ```
 #[component]
 fn form<'a, R: Renderable>(
     form_id: &'a str,
