@@ -18,6 +18,11 @@ pub mod views;
 /// # Examples
 ///
 /// ```
+/// use axum_htmx::HxRequest;
+/// use nrs_webapp_frontend::views::document::{Document, DocumentProps};
+/// use nrs_webapp_frontend::maybe_document;
+/// use hypertext::prelude::*;
+///
 /// // HX request: only toasts and children are rendered
 /// let hx = HxRequest(true);
 /// let props = DocumentProps::default();

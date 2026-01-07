@@ -22,18 +22,14 @@ pub struct DocumentProps {
 /// # Examples
 ///
 /// ```
-/// use crate::views::document::{document, DocumentProps};
-/// use crate::views::components::Toast;
-/// use leptos::view::View;
+/// use nrs_webapp_frontend::views::document::{Document, DocumentProps};
+/// use hypertext::prelude::*;
 ///
-/// let props = DocumentProps {
-///     error: false,
-///     logged_in: true,
-///     toasts: Vec::<Toast>::new(),
+/// let _html = rsx! {
+///    <Document props=(DocumentProps { error: false, logged_in: true, toasts: vec![] })>
+///    // page content here
+///    </Document>
 /// };
-///
-/// // `children` can be any renderable; here we use an empty fragment.
-/// let html = document(&props, &|_| View::empty());
 /// ```
 #[component]
 pub fn document<R: Renderable>(props: &DocumentProps, children: &R) -> impl Renderable {

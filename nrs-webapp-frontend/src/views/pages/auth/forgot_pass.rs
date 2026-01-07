@@ -11,9 +11,8 @@ use crate::views::components::link::{Link, LinkParams};
 /// # Examples
 ///
 /// ```
-/// let view = forgot_pass();
-/// // `view` can be returned from a handler or composed into a page template.
-/// assert!(true);
+/// use nrs_webapp_frontend::views::pages::auth::forgot_pass::forgot_pass;
+/// let _view = forgot_pass();
 /// ```
 ///
 /// # Returns
@@ -38,6 +37,7 @@ pub fn forgot_pass() -> impl Renderable {
 /// # Examples
 ///
 /// ```
+/// use nrs_webapp_frontend::views::pages::auth::forgot_pass::forgot_pass_sent;
 /// let _ = forgot_pass_sent();
 /// ```
 pub fn forgot_pass_sent() -> impl Renderable {
@@ -62,7 +62,8 @@ pub fn forgot_pass_sent() -> impl Renderable {
 /// # Examples
 ///
 /// ```
-/// let view = reset_pass("token123".to_string());
+/// use nrs_webapp_frontend::views::pages::auth::forgot_pass::reset_pass;
+/// let _view = reset_pass("token123".to_string());
 /// // use `view` with the app's rendering pipeline
 /// ```
 pub fn reset_pass(token: String) -> impl Renderable {

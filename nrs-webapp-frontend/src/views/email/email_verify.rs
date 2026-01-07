@@ -7,6 +7,7 @@ use hypertext::prelude::*;
 /// # Examples
 ///
 /// ```
+/// use nrs_webapp_frontend::views::email::email_verify::email_verify;
 /// let _view = email_verify("alice", "https://example.com/verify");
 /// ```
 pub fn email_verify<'a>(username: &'a str, href: &'a str) -> impl Renderable {

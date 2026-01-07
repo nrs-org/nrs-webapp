@@ -1,7 +1,7 @@
 use axum::http::Method;
 use hypertext::prelude::*;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct LinkParams<'a> {
     pub href: &'a str,
     pub class: &'a str,
@@ -20,15 +20,10 @@ pub struct LinkParams<'a> {
 ///
 /// ```
 /// use axum::http::Method;
+/// use nrs_webapp_frontend::views::components::link::{Link, LinkParams};
+/// use hypertext::prelude::*;
 ///
-/// let params = LinkParams {
-///     href: "/items",
-///     class: "nav-link",
-///     hx_vals: "{}",
-///     method: Method::GET,
-/// };
-///
-/// let node = link(&"Open items", &params);
+/// let _node = rsx! {<Link params=(LinkParams { href: "/items", class: "nav-link", hx_vals: "{}", method: Method::GET })>"Open items"</Link>};
 /// ```
 #[component]
 pub fn link<'a, R: Renderable>(children: &R, params: &LinkParams<'a>) -> impl Renderable {

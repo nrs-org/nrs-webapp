@@ -21,8 +21,7 @@ pub enum LoginToast {
 /// # Examples
 ///
 /// ```
-/// // Construct the component (rendering is performed by the surrounding framework)
-/// let component = crate::views::pages::auth::login();
+/// let _login = nrs_webapp_frontend::views::pages::auth::login::login();
 /// ```
 pub fn login() -> impl Renderable {
     rsx! {
