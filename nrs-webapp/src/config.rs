@@ -8,6 +8,7 @@ use base64::{Engine as _, prelude::BASE64_URL_SAFE};
 #[allow(non_snake_case)]
 pub struct AppConfig {
     pub STATIC_SERVE_DIR: String,
+    pub SERVICE_BASE_URL: String,
     pub SERVICE_DB_URL: String,
     pub IP_SOURCE: ClientIpSource,
 
@@ -131,6 +132,7 @@ impl AppConfig {
     pub fn load_from_env() -> anyhow::Result<Self> {
         Ok(Self {
             STATIC_SERVE_DIR: Self::get_env("STATIC_SERVE_DIR")?,
+            SERVICE_BASE_URL: Self::get_env("SERVICE_BASE_URL")?,
             SERVICE_DB_URL: Self::get_env("SERVICE_DB_URL")?,
             IP_SOURCE: Self::get_env_parse::<ClientIpSource>("IP_SOURCE")?,
             SERVICE_PASSWORD_PEPPER: Self::get_env_b64u("SERVICE_PASSWORD_PEPPER")?,

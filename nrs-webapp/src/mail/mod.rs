@@ -104,7 +104,10 @@ pub async fn send_email_verification_mail(
     );
 
     let subject = "nrs-webapp - Please verify your email address";
-    let href = format!("http://localhost:3621/auth/confirmmail/confirm?token={token}");
+    let href = format!(
+        "{}/auth/confirmmail/confirm?token={token}",
+        AppConfig::get().SERVICE_BASE_URL
+    );
 
     let body = email_verify(username, &href);
 
@@ -147,7 +150,10 @@ pub async fn send_password_reset_mail(
     );
 
     let subject = "nrs-webapp - Password Reset Request";
-    let href = format!("http://localhost:3621/auth/forgotpass/reset?token={token}");
+    let href = format!(
+        "{}/auth/forgotpass/reset?token={token}",
+        AppConfig::get().SERVICE_BASE_URL
+    );
 
     let body = password_reset(username, &href);
 

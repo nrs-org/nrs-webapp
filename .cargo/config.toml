@@ -1,5 +1,6 @@
 [env]
 RUST_LOG = "nrs_webapp=debug"
+SERVICE_BASE_URL = "http://localhost:3621"
 SERVICE_DB_URL = "postgres://nrs_webapp_user:dev_only_pwd@localhost:3622/nrs_webapp_dev"
 STATIC_SERVE_DIR = "nrs-webapp-frontend/static/serve"
 IP_SOURCE = "ConnectInfo"
