@@ -93,7 +93,7 @@ pub fn navbar(logged_in: bool) -> impl Renderable {
                         </ul>
                     </div>
                 } @else {
-                    <a class="btn btn-primary" hx-get="/auth/login" hx-target="#page" hx-swap="innerHTML" hx-push-url=true>Log in</a>
+                    <Link params=(LinkParams { class: "btn btn-primary", href: "/auth/login", ..Default::default() })>"Log in"</Link>
                 }
             </section>
         </header>
