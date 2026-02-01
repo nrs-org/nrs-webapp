@@ -4,39 +4,41 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     jailed-agents.url = "github:btmxh/jailed-agents";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
     {
       nixpkgs,
       jailed-agents,
+      flake-utils,
       ...
     }:
-    let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
-    in
-    {
-      devShells.${system}.default = pkgs.mkShell {
-        packages =
-          with pkgs;
-          [
-            rustc
-            cargo
-            rustfmt
-            clippy
-            pnpm
-            nodejs
-            bacon
-            lld
-            wasm-bindgen-cli
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = import nixpkgs { inherit system; };
+      in
+      {
+        devShells.default = pkgs.mkShell {
+          packages =
+            with pkgs;
+            [
+              rustc
+              cargo
+              rustfmt
+              clippy
+              pnpm
+              nodejs
+              bacon
+              lld
+              wasm-bindgen-cli
 
-            # nix stuff
-            nixfmt
-            nixd
-          ]
-          ++ (
-            builtins.attrValues (
+              # nix stuff
+              nixfmt
+              nixd
+            ]
+            ++ (builtins.attrValues (
               jailed-agents.lib.${system}.makeJailedAgents {
                 extraPkgs = with pkgs; [
                   rustc
@@ -46,8 +48,8 @@
                   wasm-bindgen-cli
                 ];
               }
-            )
-          );
-      };
-    };
+            ));
+        };
+      }
+    );
 }
