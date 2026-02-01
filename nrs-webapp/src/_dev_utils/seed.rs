@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
 use nrs_webapp_core::{data::entry::types::idtype::EntryType, legacy_json::Bulk};
+use uuid::Uuid;
 
 use crate::{
     _dev_utils::Db,
@@ -23,7 +24,7 @@ pub async fn seed_dev_db(_db: &Db) {
     seed_entries(&mut mm).await;
 }
 
-static TEST_USER_ID: Mutex<Option<String>> = Mutex::new(None);
+static TEST_USER_ID: Mutex<Option<Uuid>> = Mutex::new(None);
 
 /// Creates a deterministic test user in the database and returns its user ID.
 ///
@@ -47,7 +48,7 @@ static TEST_USER_ID: Mutex<Option<String>> = Mutex::new(None);
 /// println!("created test user id: {}", id);
 /// # }
 /// ```
-async fn create_test_user(mm: &mut ModelManager) -> String {
+async fn create_test_user(mm: &mut ModelManager) -> Uuid {
     tracing::info!("{:<12} -- create_test_user()", "FOR-DEV-ONLY");
 
     let username = "testuser".into();
@@ -69,7 +70,7 @@ async fn create_test_user(mm: &mut ModelManager) -> String {
     .await
     .expect("Unable to create test user");
 
-    UserBmc::mark_email_verified(mm, &id)
+    UserBmc::mark_email_verified(mm, id)
         .await
         .expect("Unable to verify test user email");
 
@@ -79,12 +80,12 @@ async fn create_test_user(mm: &mut ModelManager) -> String {
         id
     );
 
-    TEST_USER_ID.lock().unwrap().replace(id.clone());
+    TEST_USER_ID.lock().unwrap().replace(id);
 
     id
 }
 
-pub fn test_user_id() -> String {
+pub fn test_user_id() -> Uuid {
     TEST_USER_ID.lock().unwrap().clone().unwrap()
 }
 

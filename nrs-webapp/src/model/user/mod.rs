@@ -1,6 +1,7 @@
 use sea_query::{Expr, ExprTrait};
 use sqlbindable::{Fields, HasFields};
 use sqlx::FromRow;
+use uuid::Uuid;
 
 use crate::model::{
     Error, Result, SqlxRow,
@@ -16,7 +17,7 @@ impl DbBmc for UserBmc {
 
 impl DbBmcWithPkey for UserBmc {
     const PRIMARY_KEY: &'static str = "id";
-    type PkeyType = String;
+    type PkeyType = Uuid;
 }
 
 #[derive(Debug, Clone, FromRow, Fields)]
@@ -75,7 +76,7 @@ impl UserBmc {
     pub async fn create_user(
         mm: &mut impl PrimaryStore,
         create_req: UserForCreate,
-    ) -> Result<String> {
+    ) -> Result<Uuid> {
         <Self as DbBmcWithPkey>::create_returning_pkey(mm, create_req)
             .await
             .map_err(|e| match e {
@@ -149,8 +150,8 @@ impl UserBmc {
     /// mark_email_verified(&mut mm, "user-123").await?;
     /// # Ok(()) }
     /// ```
-    pub async fn mark_email_verified(mm: &mut impl PrimaryStore, user_id: &str) -> Result<()> {
-        <Self as DbBmcWithPkey>::update(mm, UserMarkEmailVerified::default(), user_id.into()).await
+    pub async fn mark_email_verified(mm: &mut impl PrimaryStore, user_id: Uuid) -> Result<()> {
+        <Self as DbBmcWithPkey>::update(mm, UserMarkEmailVerified::default(), user_id).await
     }
 
     /// Update a user's stored password hash.
@@ -177,7 +178,7 @@ impl UserBmc {
     /// ```
     pub async fn reset_password(
         mm: &mut impl PrimaryStore,
-        user_id: String,
+        user_id: Uuid,
         password_hash: String,
     ) -> Result<()> {
         <Self as DbBmcWithPkey>::update(mm, UserResetPassword { password_hash }, user_id).await

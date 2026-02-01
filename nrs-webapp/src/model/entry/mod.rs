@@ -1,5 +1,6 @@
 use sqlbindable::Fields;
 use sqlx::FromRow;
+use uuid::Uuid;
 
 use crate::model::{
     Result,
@@ -24,7 +25,7 @@ pub struct EntryForCreate {
     pub id: String,
     pub title: String,
     pub entry_type: EntryType,
-    pub added_by: String,
+    pub added_by: Uuid,
     pub overall_score: f64,
 }
 

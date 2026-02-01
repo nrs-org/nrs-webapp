@@ -20,6 +20,7 @@ use serde::Deserialize;
 use sqlbindable::Fields;
 use sqlx::prelude::FromRow;
 use time::OffsetDateTime;
+use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
@@ -227,7 +228,7 @@ async fn send_reset_password_link(
 
 #[derive(Debug, FromRow, Fields)]
 struct UserIdNameEmailVerifiedAt {
-    id: String,
+    id: Uuid,
     username: String,
     email_verified_at: Option<OffsetDateTime>,
 }

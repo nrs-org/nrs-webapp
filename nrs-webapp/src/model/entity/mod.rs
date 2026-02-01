@@ -144,11 +144,11 @@ pub trait DbBmc: Send {
 #[allow(async_fn_in_trait)]
 pub trait DbBmcWithPkey: DbBmc {
     const PRIMARY_KEY: &'static str;
-    type PkeyType: Into<EntityId>;
+    type PkeyType: Into<EntityId> + Clone;
 
-    fn cond_pkey(pkey: &Self::PkeyType) -> SimpleExpr
+    fn cond_pkey(pkey: Self::PkeyType) -> SimpleExpr
     where
-        Value: for<'a> From<&'a Self::PkeyType>,
+        Value: From<Self::PkeyType>,
     {
         Expr::col(Self::PRIMARY_KEY).eq(pkey)
     }
@@ -180,9 +180,9 @@ pub trait DbBmcWithPkey: DbBmc {
     async fn get<E>(mm: &mut impl PrimaryStore, id: Self::PkeyType) -> Result<E>
     where
         E: for<'r> sqlx::FromRow<'r, SqlxRow> + Send + Unpin + HasFields,
-        Value: for<'e> From<&'e Self::PkeyType>,
+        Value: From<Self::PkeyType>,
     {
-        Self::get_optional_by_expr::<E>(mm, Self::cond_pkey(&id))
+        Self::get_optional_by_expr::<E>(mm, Self::cond_pkey(id.clone()))
             .await?
             .ok_or_else(|| Self::not_found_error(id))
     }
@@ -193,9 +193,9 @@ pub trait DbBmcWithPkey: DbBmc {
         id: Self::PkeyType,
     ) -> Result<()>
     where
-        Value: for<'e> From<&'e Self::PkeyType>,
+        Value: From<Self::PkeyType>,
     {
-        let rows_affected = Self::update_cond(mm, update_req, Self::cond_pkey(&id)).await?;
+        let rows_affected = Self::update_cond(mm, update_req, Self::cond_pkey(id.clone())).await?;
         if rows_affected == 0 {
             return Err(Self::not_found_error(id));
         }
@@ -204,9 +204,9 @@ pub trait DbBmcWithPkey: DbBmc {
 
     async fn delete(mm: &mut impl PrimaryStore, id: Self::PkeyType) -> Result<()>
     where
-        Value: for<'e> From<&'e Self::PkeyType>,
+        Value: From<Self::PkeyType>,
     {
-        let rows_affected = Self::delete_cond(mm, Self::cond_pkey(&id)).await?;
+        let rows_affected = Self::delete_cond(mm, Self::cond_pkey(id.clone())).await?;
         if rows_affected == 0 {
             return Err(Self::not_found_error(id));
         }

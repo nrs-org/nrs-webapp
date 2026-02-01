@@ -51,11 +51,24 @@ impl TryIntoExpr for Expr {
 }
 
 #[macro_export]
-macro_rules! impl_into_expr_through_value {
+macro_rules! impl_into_expr_through_value_nocopy {
     ($ty:ty) => {
         impl sqlbindable::TryIntoExpr for $ty {
             fn into_expr(self) -> Result<sea_query::Expr, sqlbindable::TryIntoExprError> {
                 Ok(sea_query::Value::from(self).into())
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! impl_into_expr_through_value {
+    ($ty:ty) => {
+        impl_into_expr_through_value_nocopy!($ty);
+
+        impl<'a> sqlbindable::TryIntoExpr for &'a $ty {
+            fn into_expr(self) -> Result<sea_query::Expr, sqlbindable::TryIntoExprError> {
+                Ok(sea_query::Value::from(*self).into())
             }
         }
     };
@@ -71,13 +84,15 @@ impl_into_expr_through_value!(u32);
 impl_into_expr_through_value!(u64);
 impl_into_expr_through_value!(f32);
 impl_into_expr_through_value!(f64);
-impl_into_expr_through_value!(Vec<u8>);
-impl_into_expr_through_value!(String);
+impl_into_expr_through_value_nocopy!(Vec<u8>);
+impl_into_expr_through_value_nocopy!(String);
 
 #[cfg(feature = "with-time")]
 impl_into_expr_through_value!(time::OffsetDateTime);
 #[cfg(feature = "with-chrono")]
 impl_into_expr_through_value!(chrono::DateTime<chrono::Utc>);
+#[cfg(feature = "with-uuid")]
+impl_into_expr_through_value!(uuid::Uuid);
 
 impl<T: TryIntoExpr + Nullable> TryIntoExpr for Option<T> {
     fn into_expr(self) -> Result<Expr, TryIntoExprError> {

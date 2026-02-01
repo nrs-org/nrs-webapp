@@ -18,6 +18,7 @@ use serde::Deserialize;
 use sqlbindable::Fields;
 use sqlx::prelude::FromRow;
 use time::OffsetDateTime;
+use uuid::Uuid;
 
 use crate::{
     Error, Result,
@@ -158,7 +159,7 @@ async fn confirm_submit(
     .always_send()
     .await?;
 
-    UserBmc::mark_email_verified(&mut tx, &user_id)
+    UserBmc::mark_email_verified(&mut tx, user_id)
         .always_send()
         .await?;
     tx.commit().await?;
@@ -239,7 +240,7 @@ async fn send_confirm_mail(
 
 #[derive(Debug, FromRow, Fields)]
 struct UserIdEmail {
-    id: String,
+    id: Uuid,
     email: String,
     email_verified_at: Option<OffsetDateTime>,
 }

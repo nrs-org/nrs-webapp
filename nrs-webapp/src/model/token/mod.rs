@@ -2,6 +2,7 @@ use sea_query::{Expr, ExprTrait, OnConflict, Query, Value};
 use sqlbindable::{BindContext, Fields, HasFields, TryIntoExpr, TryIntoExprError};
 use sqlx::prelude::FromRow;
 use time::OffsetDateTime;
+use uuid::Uuid;
 
 use crate::model::{self, Result, entity::DbBmc, store::primary_store::PrimaryStore};
 
@@ -71,7 +72,7 @@ impl DbBmc for UserOneTimeTokenBmc {
 
 #[derive(Debug, Clone, Fields)]
 pub struct UserOneTimeTokenCreateReq {
-    pub user_id: String,
+    pub user_id: Uuid,
     pub purpose: TokenPurpose,
     pub token_hash: String,
     pub expires_at: OffsetDateTime,
@@ -81,7 +82,7 @@ pub struct UserOneTimeTokenCreateReq {
 
 #[derive(FromRow)]
 struct UserId {
-    user_id: String,
+    user_id: Uuid,
 }
 
 impl UserOneTimeTokenBmc {
@@ -149,7 +150,7 @@ impl UserOneTimeTokenBmc {
         ps: &mut impl PrimaryStore,
         token_hash: &str,
         purpose: TokenPurpose,
-    ) -> Result<String> {
+    ) -> Result<Uuid> {
         let UserId { user_id } = ps
             .query_as_with::<UserId>(
                 Query::update()
