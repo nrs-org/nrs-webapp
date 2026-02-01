@@ -59,9 +59,9 @@ async fn page(hx_req: HxRequest, DocProps(props): DocProps) -> impl IntoResponse
 struct RegisterPayload {
     #[validate(length(min = 3, max = 20), regex(path=*USERNAME_REGEX))]
     username: String,
-    #[validate(email)]
+    #[validate(email, length(max = 100))]
     email: String,
-    #[validate(length(min = 8), custom(function = validate_password))]
+    #[validate(length(min = 8, max = 50), custom(function = validate_password))]
     password: String,
 }
 

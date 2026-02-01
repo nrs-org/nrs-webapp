@@ -147,7 +147,7 @@ async fn email_submit(
 #[derive(Deserialize, Validate)]
 struct ResetPasswordSubmitPayload {
     token: String,
-    #[validate(length(min = 8), custom(function = validate_password))]
+    #[validate(length(min = 8, max = 50), custom(function = validate_password))]
     password: String,
 }
 

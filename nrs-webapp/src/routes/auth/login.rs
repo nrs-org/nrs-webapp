@@ -58,7 +58,9 @@ async fn page(hx_req: HxRequest, DocProps(props): DocProps) -> impl IntoResponse
 
 #[derive(Deserialize, Validate)]
 struct LoginPayload {
+    #[validate(length(max = 50))]
     username: String,
+    #[validate(length(max = 50))]
     password: String,
 }
 
