@@ -40,6 +40,7 @@ use crate::{
         token::{TokenPurpose, UserOneTimeTokenBmc, UserOneTimeTokenCreateReq},
         user::UserBmc,
     },
+    routes::auth::mask_email_for_log,
     toast_on_page_load,
     toasts::ConstToast,
     validate::auth::validate_password,
@@ -280,7 +281,7 @@ async fn send_reset_password_link_inner(
     tracing::debug!(
         "{:<12} -- send_reset_password_link -- email: {}",
         "FOR-DEV-ONLY",
-        email
+        mask_email_for_log(&email)
     );
 
     RATE_LIMITER
@@ -323,7 +324,7 @@ async fn send_reset_password_link_inner(
         tracing::debug!(
             "{:<12} -- send_reset_password_link -- No verified user found with email: {}",
             "FOR-DEV-ONLY",
-            email
+            mask_email_for_log(&email)
         );
     }
 

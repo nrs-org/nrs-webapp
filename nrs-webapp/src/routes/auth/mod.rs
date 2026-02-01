@@ -30,3 +30,12 @@ pub fn router(mm: ModelManager) -> Router {
         .nest("/forgotpass", forgot_password::router())
         .with_state(mm)
 }
+
+pub(crate) fn mask_email_for_log(email: &str) -> String {
+    if let Some((local, domain)) = email.split_once('@') {
+        let first = local.chars().next().unwrap_or('*');
+        format!("{}***@{}", first, domain)
+    } else {
+        "<redacted-email>".to_string()
+    }
+}
