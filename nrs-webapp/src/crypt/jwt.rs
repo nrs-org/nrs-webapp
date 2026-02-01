@@ -167,13 +167,14 @@ mod tests {
         let ctx = ctx(b"test-secret", Duration::minutes(10));
         let before = OffsetDateTime::now_utc();
 
-        let claims = ctx.generate_claims("user-123".to_string());
+        let uuid = Uuid::new_v4();
+        let claims = ctx.generate_claims(uuid);
 
         let after = OffsetDateTime::now_utc();
 
         assert_eq!(claims.iss, "nrs-webapp");
         assert_eq!(claims.aud, "nrs-webapp-users");
-        assert_eq!(claims.sub, "user-123");
+        assert_eq!(claims.sub, uuid.to_string());
 
         // iat should be roughly "now"
         assert!(claims.iat >= before);
@@ -209,7 +210,9 @@ mod tests {
     #[test]
     fn sign_and_verify_roundtrip() {
         let ctx = ctx(b"roundtrip-secret", Duration::minutes(15));
-        let claims = ctx.generate_claims("user-abc".to_string());
+
+        let uuid = Uuid::new_v4();
+        let claims = ctx.generate_claims(uuid);
 
         let token = ctx.sign(&claims).expect("sign should succeed");
         let decoded = ctx.verify(&token).expect("verify should succeed");
