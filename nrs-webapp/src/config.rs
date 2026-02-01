@@ -103,7 +103,9 @@ impl AppConfig {
     /// ```
     fn get_env_b64u(key: &'static str) -> anyhow::Result<Vec<u8>> {
         let value_str = Self::get_env(key)?;
-        let decoded = BASE64_URL_SAFE.decode(&value_str)?;
+        let decoded = BASE64_URL_SAFE
+            .decode(&value_str)
+            .with_context(|| format!("Invalid base64 for key {}", key))?;
         Ok(decoded)
     }
 
