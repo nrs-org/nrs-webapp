@@ -142,9 +142,11 @@ fn split_sql_with_blocks(sql: &str) -> Vec<String> {
 
 /// Executes SQL statements from a string against the given database pool.
 ///
-/// The input `sql` is split on semicolons (`;`); each non-empty, trimmed segment is executed as an individual SQL statement against `pool`. If any statement fails, this function panics with a message that includes the database error and the original statement that caused the failure.
-///
-/// Note: splitting on `;` is done naively and may not handle semicolons inside string literals, comments, or other SQL constructs.
+/// The input `sql` is split into statements using `split_sql_with_blocks`, which respects
+/// `-- BEGIN SQL BLOCK` / `-- END SQL BLOCK` markers to preserve semicolons within blocks
+/// (e.g., function bodies). Each non-empty, trimmed segment is executed as an individual
+/// SQL statement against `pool`. If any statement fails, this function panics with a message
+/// that includes the database error and the original statement that caused the failure.
 ///
 /// # Examples
 ///
