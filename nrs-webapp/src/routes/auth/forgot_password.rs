@@ -165,7 +165,6 @@ struct ResetPasswordSubmitPayload {
 /// let resp = (HxPushUrl("/auth/login".into()), Redirect::to(&url));
 /// ```
 async fn reset_submit(
-    DocProps(_props): DocProps,
     State(mm): State<ModelManager>,
     WRVForm(ResetPasswordSubmitPayload { token, password }): WRVForm<ResetPasswordSubmitPayload>,
 ) -> Result<impl IntoResponse> {
