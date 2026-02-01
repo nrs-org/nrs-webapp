@@ -10,7 +10,7 @@ use super::Form;
 ///
 /// ```
 /// use nrs_webapp_frontend::views::pages::auth::confirm_email::confirm_mail;
-/// let component = confirm_mail("alice@example.com".into());
+/// let component = confirm_mail("alicesoty2025".into());
 /// // `component` can be rendered by the application's rendering system
 /// ```
 pub fn confirm_mail(username: String) -> impl Renderable {
