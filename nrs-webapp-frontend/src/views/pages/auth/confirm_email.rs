@@ -20,7 +20,7 @@ pub fn confirm_mail(username: String) -> impl Renderable {
 
             <p>"A confirmation email has been sent to your email address. Click the link in the email to confirm your email."</p>
 
-            <input name="username" type="hidden" class="input" value=(username) required />
+            <input name="username" type="hidden" value=(username) />
 
             <button type="submit" class="btn btn-neutral mt-4">Resend confirmation email</button>
 
