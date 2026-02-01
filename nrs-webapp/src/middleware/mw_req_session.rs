@@ -29,8 +29,8 @@ pub async fn mw_req_session(jar: CookieJar, mut req: Request, next: Next) -> Res
 
     if let Some(token) = get_auth_cookie(&jar)
         && let Ok(TokenData { claims, .. }) = JwtContext::get_from_config().verify(&token)
+        && let Ok(session) = Session::try_from(claims)
     {
-        let session = Session::from(claims);
         tracing::debug!("Got session {session:?}");
         req.extensions_mut().insert(session);
     }

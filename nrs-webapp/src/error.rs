@@ -83,14 +83,10 @@ impl Error {
                 StatusCode::METHOD_NOT_ALLOWED,
                 "The page you are looking for does not exist.".into(),
             ),
-            Error::Auth(err) => match err {
-                auth::Error::Login(err) => match err {
-                    auth::error::LoginError::InvalidCredentials => (
-                        StatusCode::BAD_REQUEST,
-                        "Invalid credentials provided.".into(),
-                    ),
-                },
-            },
+            Error::Auth(auth::Error::Login(auth::error::LoginError::InvalidCredentials)) => (
+                StatusCode::BAD_REQUEST,
+                "Invalid credentials provided.".into(),
+            ),
             Error::Model(model::Error::EmailOrUsernameAlreadyExists) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 "A user with the given email or username already exists.".into(),

@@ -286,7 +286,7 @@ async fn send_confirm_email_inner(
 
     RATE_LIMITER
         .get_or_init(|| RateLimiter::keyed(Quota::per_minute(nonzero!(1u32))))
-        .check_key(&username)
+        .check_key(&username.to_lowercase())
         .map_err(|_| Error::RateLimitExceeded {
             service: "confirm-email",
         })?;

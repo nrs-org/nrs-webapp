@@ -4,7 +4,6 @@ use nrs_webapp_core::{data::entry::types::idtype::EntryType, legacy_json::Bulk};
 use uuid::Uuid;
 
 use crate::{
-    _dev_utils::Db,
     crypt::password_hash::PasswordHasher,
     model::{
         ModelManager,
@@ -13,7 +12,7 @@ use crate::{
     },
 };
 
-pub async fn seed_dev_db(_db: &Db) {
+pub async fn seed_dev_db() {
     tracing::info!("{:<12} -- seed_dev_db()", "FOR-DEV-ONLY");
 
     let mut mm = ModelManager::new()

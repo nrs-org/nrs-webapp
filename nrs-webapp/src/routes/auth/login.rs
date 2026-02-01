@@ -12,6 +12,7 @@ use serde::Deserialize;
 use sqlbindable::Fields;
 use sqlx::FromRow;
 use time::OffsetDateTime;
+use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
@@ -66,7 +67,7 @@ struct LoginPayload {
 
 #[derive(Fields, FromRow)]
 struct LoginUser {
-    id: String,
+    id: Uuid,
     password_hash: String,
     email_verified_at: Option<OffsetDateTime>,
 }

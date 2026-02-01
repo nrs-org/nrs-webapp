@@ -4,6 +4,7 @@ use jsonwebtoken::{DecodingKey, EncodingKey, TokenData};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use time::{Duration, OffsetDateTime};
+use uuid::Uuid;
 
 use super::Result;
 use crate::config::AppConfig;
@@ -87,12 +88,12 @@ impl JwtContext {
     /// ```
     ///
     /// Returns the populated `JwtClaims` with `sub` equal to the given `user_id`, `iat` set to now, and `exp` set to now plus the context's expiry duration.
-    pub fn generate_claims(&self, user_id: String) -> JwtClaims {
+    pub fn generate_claims(&self, user_id: Uuid) -> JwtClaims {
         let now = OffsetDateTime::now_utc();
         JwtClaims {
             iss: "nrs-webapp".to_string(),
             aud: "nrs-webapp-users".to_string(),
-            sub: user_id,
+            sub: user_id.to_string(),
             iat: now,
             exp: now + self.expiry_duration,
         }
@@ -238,7 +239,8 @@ mod tests {
         let ctx_good = ctx(b"correct-secret", Duration::minutes(10));
         let ctx_bad = ctx(b"wrong-secret", Duration::minutes(10));
 
-        let claims = ctx_good.generate_claims("user-x".to_string());
+        let uuid = Uuid::new_v4();
+        let claims = ctx_good.generate_claims(uuid);
         let token = ctx_good.sign(&claims).expect("sign should succeed");
 
         let result = ctx_bad.verify(&token);

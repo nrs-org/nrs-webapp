@@ -286,7 +286,7 @@ async fn send_reset_password_link_inner(
 
     RATE_LIMITER
         .get_or_init(|| RateLimiter::keyed(Quota::per_minute(nonzero!(5u32))))
-        .check_key(&email)
+        .check_key(&email.to_lowercase())
         .map_err(|_| Error::RateLimitExceeded {
             service: "password-reset",
         })?;

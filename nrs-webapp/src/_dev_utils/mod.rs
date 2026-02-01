@@ -15,6 +15,6 @@ const PG_DEV_APP_URL: &str =
 pub async fn init_dev() {
     tracing::info!("{:<12} -- init_dev()", "FOR-DEV-ONLY");
 
-    let db = init_dev_db().await;
-    seed_dev_db(&db).await;
+    let _ = init_dev_db().await;
+    seed_dev_db().await;
 }
