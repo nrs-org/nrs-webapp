@@ -60,6 +60,86 @@ async fn new_db_pool(url: &str) -> Db {
         .expect("Failed to create DB pool")
 }
 
+/// Splits the given SQL string into individual statements, respecting SQL blocks.
+///
+/// The input `sql` is split into segments based on semicolons (`;`), except when inside SQL blocks
+/// defined by `-- BEGIN SQL BLOCK` and `-- END SQL BLOCK` comments. Each non-empty, trimmed
+/// segment is returned as an individual string in the output vector.
+///
+/// # Examples
+/// ```sql
+/// -- This is a normal statement
+/// CREATE TABLE test(id INT);
+///
+/// -- This is parsed as a block
+/// -- BEGIN SQL BLOCK
+/// INSERT INTO test(id) VALUES (1);
+/// INSERT INTO test(id) VALUES (2);
+/// -- END SQL BLOCK
+///
+/// -- A function, which may contain semicolons
+/// -- BEGIN SQL BLOCK
+/// CREATE OR REPLACE FUNCTION do_something() RETURNS VOID AS $$
+/// BEGIN
+///   -- function body
+///   NULL;
+///   RETURN;
+/// END;
+/// $$ LANGUAGE plpgsql;
+/// -- END SQL BLOCK
+/// ```
+fn split_sql_with_blocks(sql: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut buf = String::new();
+    let mut in_block = false;
+
+    for line in sql.lines() {
+        let trimmed = line.trim();
+
+        if trimmed.starts_with("-- BEGIN SQL BLOCK") {
+            in_block = true;
+        }
+
+        if in_block {
+            buf.push_str(line);
+            buf.push('\n');
+
+            if trimmed.starts_with("-- END SQL BLOCK") {
+                in_block = false;
+                if !buf.trim().is_empty() {
+                    out.push(buf.trim().to_string());
+                }
+                buf.clear();
+            }
+
+            continue;
+        }
+
+        // normal mode: split by semicolon
+        let mut rest = line;
+        while let Some(idx) = rest.find(';') {
+            let (before, after) = rest.split_at(idx);
+            buf.push_str(before);
+
+            if !buf.trim().is_empty() {
+                out.push(buf.trim().to_string());
+            }
+
+            buf.clear();
+            rest = &after[1..]; // skip ';'
+        }
+
+        buf.push_str(rest);
+        buf.push('\n');
+    }
+
+    if !buf.trim().is_empty() {
+        out.push(buf.trim().to_string());
+    }
+
+    out
+}
+
 /// Executes SQL statements from a string against the given database pool.
 ///
 /// The input `sql` is split on semicolons (`;`); each non-empty, trimmed segment is executed as an individual SQL statement against `pool`. If any statement fails, this function panics with a message that includes the database error and the original statement that caused the failure.
@@ -83,7 +163,7 @@ async fn execute_sql(pool: &Db, sql: &str, file_path: &str) {
     );
 
     // FIXME: avoid splitting by ';' naively, handle edge cases
-    for cmd in sql.split(';') {
+    for cmd in split_sql_with_blocks(sql) {
         let trimmed = cmd.trim();
         if !trimmed.is_empty() {
             sqlx::query(trimmed)

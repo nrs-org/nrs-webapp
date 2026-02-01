@@ -15,3 +15,8 @@ CREATE TABLE IF NOT EXISTS app_user (
 CREATE INDEX app_user_verified_idx
 ON app_user (email_verified_at)
 WHERE email_verified_at IS NOT NULL;
+
+CREATE TRIGGER update_app_user_updated_at
+    BEFORE UPDATE ON app_user
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
