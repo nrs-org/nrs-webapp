@@ -35,12 +35,12 @@ pub fn register() -> impl Renderable {
             <label class="label" for="signup-password">Password</label>
             <input
                 id="signup-password" name="password" type="password" class="input validator w-full" required placeholder="Password"
-                minlength="8" pattern="(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-                title="Must be more than 8 characters, including number, lowercase letter, uppercase letter"
+                minlength="8" maxlength="50" pattern="(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                title="Must be 8-50 characters, including number, lowercase letter, uppercase letter"
                 oninput="document.getElementById('signup-password-confirm').dispatchEvent(new Event('input'))"
             />
             <p class="validator-hint hidden">
-              "Must be more than 8 characters, including"
+              "Must be 8-50 characters, including"
               <br/>At least one number
               <br/>At least one lowercase letter
               <br/>At least one uppercase letter
