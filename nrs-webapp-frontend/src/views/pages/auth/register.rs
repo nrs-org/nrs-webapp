@@ -37,6 +37,7 @@ pub fn register() -> impl Renderable {
                 id="signup-password" name="password" type="password" class="input validator w-full" required placeholder="Password"
                 minlength="8" pattern="(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
                 title="Must be more than 8 characters, including number, lowercase letter, uppercase letter"
+                oninput="document.getElementById('signup-password-confirm').dispatchEvent(new Event('input'))"
             />
             <p class="validator-hint hidden">
               "Must be more than 8 characters, including"
