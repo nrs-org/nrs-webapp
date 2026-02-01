@@ -31,6 +31,9 @@ pub enum Error {
 
     #[error("Page not found: {uri}")]
     PageNotFound { uri: Uri },
+
+    #[error("Method not allowed: {uri}")]
+    MethodNotAllowed { uri: Uri },
 }
 
 impl From<sqlx::Error> for Error {
@@ -74,6 +77,10 @@ impl Error {
         match self {
             Error::PageNotFound { .. } => (
                 StatusCode::NOT_FOUND,
+                "The page you are looking for does not exist.".into(),
+            ),
+            Error::MethodNotAllowed { .. } => (
+                StatusCode::METHOD_NOT_ALLOWED,
                 "The page you are looking for does not exist.".into(),
             ),
             Error::Auth(err) => match err {

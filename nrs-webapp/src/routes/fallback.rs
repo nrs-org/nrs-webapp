@@ -25,7 +25,7 @@ pub async fn fallback_handler(OriginalUri(uri): OriginalUri) -> Result<Infallibl
 
 /// Handle requests with unsupported HTTP methods by returning a page-not-found error for the original URI.
 ///
-/// This fallback always produces an `Err(Error::PageNotFound)` that contains the captured request `URI`.
+/// This fallback always produces an `Err(Error::MethodNotAllowed)` that contains the captured request `URI`.
 ///
 /// # Examples
 ///
@@ -43,5 +43,5 @@ pub async fn fallback_handler(OriginalUri(uri): OriginalUri) -> Result<Infallibl
 pub async fn method_not_allowed_fallback_handler(
     OriginalUri(uri): OriginalUri,
 ) -> Result<Infallible> {
-    Err(Error::PageNotFound { uri })
+    Err(Error::MethodNotAllowed { uri })
 }
