@@ -137,6 +137,8 @@ impl JwtContext {
     pub fn verify(&self, token: &str) -> Result<TokenData<JwtClaims>> {
         let mut validation = jsonwebtoken::Validation::default();
         validation.set_audience(&["nrs-webapp-users"]);
+        validation.set_issuer(&["nrs-webapp"]);
+
         #[cfg(debug_assertions)]
         {
             validation.leeway = 0;
