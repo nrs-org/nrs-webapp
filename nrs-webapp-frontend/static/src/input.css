@@ -5,7 +5,7 @@
 }
 
 @theme {
-	--animate-toast-progress: toast-progress 4s linear forwards;
+	--animate-toast-progress: toast-progress 10s linear forwards;
 
 	@keyframes toast-progress {
 		0% {

@@ -96,7 +96,7 @@ fn toast_icon(kind: ToastKind) -> impl Renderable {
 pub fn toast_component<'a>(toast: &'a Toast) -> impl Renderable {
     let fade_out_duration_ms = 300;
     // NOTE: keep in sync with CSS animation duration defined in input.css and toast-on-load.js
-    let toast_autoclose_duration_ms = 4000;
+    let toast_autoclose_duration_ms = 10000;
     // SAFETY: description is rendered from trusted source
     let description = Raw::dangerously_create(toast.description.as_inner());
     rsx! {
