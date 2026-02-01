@@ -1,4 +1,4 @@
-use axum::response::IntoResponse;
+use axum::{http::StatusCode, response::IntoResponse};
 use axum_htmx::{HxPushUrl, HxRequest, HxReswap, SwapOption};
 use heroicons::{Icon, icon_name::ExclamationCircle, icon_variant::Solid};
 use hypertext::prelude::*;
@@ -105,6 +105,7 @@ pub fn error_page(error: &ClientError, props: &DocumentProps) -> impl Renderable
 /// let _html = error(HxRequest(false), &props, &client_error);
 /// ```
 pub fn error(
+    code: StatusCode,
     HxRequest(hx_req): HxRequest,
     props: &DocumentProps,
     error: &ClientError,

@@ -43,8 +43,9 @@ pub async fn mw_res_mapper(
     #[cfg(debug_assertions)]
     tracing::debug!("DONE-REQUEST");
 
-    let response_error = client_error_parts
-        .map(|(_code, error)| views::error::error(hx_request, &doc_props, &error).into_response());
+    let response_error = client_error_parts.map(|(code, error)| {
+        views::error::error(code, hx_request, &doc_props, &error).into_response()
+    });
 
     response_error.unwrap_or(resp)
 }
