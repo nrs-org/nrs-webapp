@@ -101,7 +101,6 @@ struct LoginUser {
 /// # Ok(()) }
 /// ```
 async fn submit(
-    _hx_req: HxRequest,
     State(mut mm): State<ModelManager>,
     jar: CookieJar,
     ClientIp(ip_addr): ClientIp,
