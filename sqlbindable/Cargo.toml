@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-sqlx = {version = "0.8", optional = true }
+sqlx = {version = "0.8", features = ["derive"], default-features = false, optional = true }
 sea-query = { version = "1.0.0-rc.22", default-features = false, features = ["with-json"] }
 sqlbindable-macros = { version = "0.1.0", path = "../sqlbindable-macros" }
 thiserror = "2.0.17"

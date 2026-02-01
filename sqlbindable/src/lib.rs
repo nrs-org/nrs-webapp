@@ -117,7 +117,7 @@ pub mod json {
 
     impl<T: serde::Serialize> TryIntoExpr for Json<T> {
         fn into_expr(self) -> Result<sea_query::Expr, crate::TryIntoExprError> {
-            Ok(sea_query::Value::Json(Some(serde_json::to_value(self.0)?)).into())
+            Ok(sea_query::Value::Json(Some(Box::new(serde_json::to_value(self.0)?))).into())
         }
     }
 }
