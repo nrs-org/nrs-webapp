@@ -142,8 +142,6 @@ struct ConfirmSubmitPayload {
 /// ```
 async fn confirm_submit(
     State(mm): State<ModelManager>,
-    ClientIp(_ip_addr): ClientIp,
-    TypedHeader(_user_agent): TypedHeader<UserAgent>,
     WRQuery(ConfirmSubmitPayload { token }): WRQuery<ConfirmSubmitPayload>,
 ) -> Result<impl IntoResponse> {
     tracing::debug!("{:<12} -- POST auth::confirm_submit", "ROUTE");
