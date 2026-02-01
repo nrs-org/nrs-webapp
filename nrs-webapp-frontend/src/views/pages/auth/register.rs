@@ -25,7 +25,7 @@ pub fn register() -> impl Renderable {
             />
             <p class="validator-hint hidden">
               "Must be 3 to 20 characters"
-              <br/>"containing only letters, numbers or dash"
+              <br/>"containing only letters, numbers, underscores or dashes"
             </p>
 
             <label class="label" for="signup-email">Email</label>
