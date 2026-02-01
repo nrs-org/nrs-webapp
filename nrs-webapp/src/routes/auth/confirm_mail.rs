@@ -144,7 +144,7 @@ async fn confirm_submit(
     State(mm): State<ModelManager>,
     WRQuery(ConfirmSubmitPayload { token }): WRQuery<ConfirmSubmitPayload>,
 ) -> Result<impl IntoResponse> {
-    tracing::debug!("{:<12} -- POST auth::confirm_submit", "ROUTE");
+    tracing::debug!("{:<12} -- GET auth::confirm_submit", "ROUTE");
 
     let token = Token::from_str(&token)?;
 
