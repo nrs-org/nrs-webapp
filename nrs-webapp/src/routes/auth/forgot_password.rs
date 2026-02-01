@@ -211,12 +211,12 @@ async fn reset_submit(
 /// ```
 async fn send_reset_password_link(
     mm: ModelManager,
-    username: String,
+    email: String,
     ip_addr: IpAddr,
     user_agent: UserAgent,
 ) {
     if let Err(err) =
-        send_reset_password_link_inner(mm, username, ip_addr, user_agent.to_string()).await
+        send_reset_password_link_inner(mm, email, ip_addr, user_agent.to_string()).await
     {
         tracing::error!(
             "{:<12} -- send_reset_password_link -- Error sending reset password link: {}",
