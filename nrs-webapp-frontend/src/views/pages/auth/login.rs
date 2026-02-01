@@ -1,5 +1,4 @@
 use hypertext::prelude::*;
-use strum::{EnumString, IntoStaticStr};
 
 use crate::views::{
     components::link::{Link, LinkParams},
@@ -7,11 +6,6 @@ use crate::views::{
 };
 
 use super::Form;
-
-#[derive(EnumString, IntoStaticStr)]
-pub enum LoginToast {
-    LoginAgainAfterEmailVerification,
-}
 
 /// Renders the sign-in page UI with username/password fields, links, and social login buttons.
 ///
