@@ -40,7 +40,7 @@ impl JwtContext {
     ///
     /// let ctx = JwtContext::new(b"my-secret", Duration::hours(1));
     /// ```
-    pub fn new(secret: &'static [u8], expiry_duration: Duration) -> Self {
+    pub fn new(secret: &[u8], expiry_duration: Duration) -> Self {
         Self {
             decoding_key: DecodingKey::from_secret(secret),
             encoding_key: EncodingKey::from_secret(secret),
