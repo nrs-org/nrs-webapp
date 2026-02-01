@@ -76,7 +76,7 @@ pub fn reset_pass(token: String) -> impl Renderable {
                 id="reset-password" name="password" type="password" class="input validator w-full" required placeholder="New password"
                 minlength="8" pattern="(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
                 title="Must be more than 8 characters, including number, lowercase letter, uppercase letter"
-                oninput="document.getElementById('signup-password-confirm').dispatchEvent(new Event('input'))"
+                oninput="document.getElementById('reset-password-confirm').dispatchEvent(new Event('input'))"
             />
             <p class="validator-hint hidden">
               "Must be more than 8 characters, including"
