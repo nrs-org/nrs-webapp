@@ -147,7 +147,8 @@ impl UserBmc {
     /// ```no_run
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let mut mm = /* obtain a PrimaryStore implementor */ unimplemented!();
-    /// mark_email_verified(&mut mm, "user-123").await?;
+    /// let id = Uuid::new_v4();
+    /// mark_email_verified(&mut mm, id).await?;
     /// # Ok(()) }
     /// ```
     pub async fn mark_email_verified(mm: &mut impl PrimaryStore, user_id: Uuid) -> Result<()> {
