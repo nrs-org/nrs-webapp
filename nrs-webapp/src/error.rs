@@ -98,6 +98,10 @@ impl Error {
             Error::Rejection(RejectionError::Validation(err)) => {
                 (StatusCode::UNPROCESSABLE_ENTITY, err.to_string().into())
             }
+            Error::RateLimitExceeded { service } => (
+                StatusCode::TOO_MANY_REQUESTS,
+                format!("Rate limit exceeded for {} service.", service).into(),
+            ),
             _ => (StatusCode::INTERNAL_SERVER_ERROR, "Unknown error.".into()),
         }
     }
