@@ -4,19 +4,25 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-sqlx = {version = "0.8", features = ["derive"], default-features = false, optional = true }
-sea-query = { version = "1.0.0-rc.22", default-features = false, features = ["with-json"] }
+sqlx = { version = "0.8", features = [
+  "derive",
+], default-features = false, optional = true }
+sea-query = { version = "1.0.0-rc.22", default-features = false, features = [
+  "with-json",
+] }
 sqlbindable-macros = { version = "0.1.0", path = "../sqlbindable-macros" }
 thiserror = "2.0.17"
-serde_json = {version = "1.0.145", optional = true}
-serde = {version = "1.0.228", optional = true}
-serde_with = {version = "3.16.1", optional = true}
-time = {version = "0.3.44", optional = true}
-chrono = {version = "0.4.42", optional = true}
-uuid = {version = "1.20.0", optional = true}
+serde_json = { version = "1.0.145", optional = true }
+serde = { version = "1.0.228", optional = true }
+serde_with = { version = "3.16.1", optional = true }
+time = { version = "0.3.44", optional = true }
+chrono = { version = "0.4.42", optional = true }
+uuid = { version = "1.20.0", optional = true }
 
 [dev-dependencies]
-sea-query = { version = "1.0.0-rc.22", default-features = false, features = ["backend-postgres"] }
+sea-query = { version = "1.0.0-rc.22", default-features = false, features = [
+  "backend-postgres",
+] }
 
 [features]
 default = ["sqlx-json", "serde", "with-time", "with-chrono"]

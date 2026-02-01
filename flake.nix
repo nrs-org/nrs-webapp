@@ -31,6 +31,8 @@
             end-of-file-fixer.enable = true;
             trim-trailing-whitespace.enable = true;
             rustfmt.enable = true;
+            check-toml.enable = true;
+            taplo.enable = true;
           };
         };
       });

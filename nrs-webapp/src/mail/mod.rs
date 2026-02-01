@@ -1,7 +1,6 @@
 mod error;
 mod log_mail;
 mod resend_mail;
-mod web_mail;
 
 use std::sync::{Arc, OnceLock};
 

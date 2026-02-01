@@ -1,3 +1,10 @@
 [workspace]
 resolver = "3"
-members = ["nrs-webapp", "nrs-webapp-core", "nrs-webapp-frontend", "sqlbindable", "sqlbindable-macros", "nrs-webapp-keygen"]
+members = [
+  "nrs-webapp",
+  "nrs-webapp-core",
+  "nrs-webapp-frontend",
+  "sqlbindable",
+  "sqlbindable-macros",
+  "nrs-webapp-keygen",
+]
