@@ -93,6 +93,7 @@ pub fn error_page(error: &ClientError, props: &DocumentProps) -> impl Renderable
 /// use nrs_webapp_frontend::views::document::DocumentProps;
 /// use axum_htmx::HxRequest;
 /// use hypertext::prelude::*;
+/// use axum::http::StatusCode;
 ///
 /// let client_error = ClientError {
 ///    title: "Server Error".into(),
@@ -102,7 +103,7 @@ pub fn error_page(error: &ClientError, props: &DocumentProps) -> impl Renderable
 /// let props = DocumentProps::default();
 ///
 /// // `hx_req`, `props`, and `client_error` are provided by the application context.
-/// let _html = error(HxRequest(false), &props, &client_error);
+/// let _html = error(StatusCode::OK, HxRequest(false), &props, &client_error);
 /// ```
 pub fn error(
     code: StatusCode,
