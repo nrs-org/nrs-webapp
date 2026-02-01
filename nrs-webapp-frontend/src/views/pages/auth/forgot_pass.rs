@@ -22,7 +22,7 @@ pub fn forgot_pass() -> impl Renderable {
     rsx! {
         <Form form_id="forgotpass-form" title="Recover password" hx_post="/auth/forgotpass">
             <label class="label" for="forgotpass-email">Email</label>
-            <input id="forgotpass-email" name="email" type="email" class="input validator w-full" required placeholder="Email" />
+            <input id="forgotpass-email" name="email" type="email" class="input validator w-full" required placeholder="Email" autocomplete="email" />
             <div class="validator-hint hidden">Please enter a valid email</div>
 
             <button type="submit" class="btn btn-neutral mt-4">Reset password</button>
@@ -77,6 +77,7 @@ pub fn reset_pass(token: String) -> impl Renderable {
                 minlength="8" pattern="(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
                 title="Must be more than 8 characters, including number, lowercase letter, uppercase letter"
                 oninput="document.getElementById('reset-password-confirm').dispatchEvent(new Event('input'))"
+                autocomplete="new-password"
             />
             <p class="validator-hint hidden">
               "Must be more than 8 characters, including"
@@ -89,6 +90,7 @@ pub fn reset_pass(token: String) -> impl Renderable {
             <input
                 id="reset-password-confirm" name="password_confirm" type="password" class="input validator w-full" required placeholder="Confirm new password"
                 oninput="this.setCustomValidity(this.value != document.getElementById('reset-password').value ? 'Passwords do not match' : '')"
+                autocomplete="new-password"
             />
             <p class="validator-hint hidden">Passwords do not match</p>
 

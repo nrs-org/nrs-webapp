@@ -21,11 +21,11 @@ pub fn login() -> impl Renderable {
     rsx! {
         <Form form_id="signin-form" title="Sign in" hx_post="/auth/login">
             <label class="label" for="signin-username">Username</label>
-            <input id="signin-username" name="username" type="text" class="input w-full validator" required placeholder="Username" />
+            <input id="signin-username" name="username" type="text" class="input w-full validator" required placeholder="Username" autocomplete="username" />
             <div class="validator-hint hidden">Please enter a valid username</div>
 
             <label class="label" for="signin-password">Password</label>
-            <input id="signin-password" name="password" type="password" class="input w-full validator" required placeholder="Password" />
+            <input id="signin-password" name="password" type="password" class="input w-full validator" required placeholder="Password" autocomplete="current-password" />
             <div class="validator-hint hidden">Please enter your password</div>
 
             <button type="submit" class="btn btn-neutral mt-4">Login</button>
