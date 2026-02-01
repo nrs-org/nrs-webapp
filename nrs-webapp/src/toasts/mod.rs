@@ -38,5 +38,3 @@ impl From<ConstToast> for Toast {
         }
     }
 }
-
-impl ConstToast {}
