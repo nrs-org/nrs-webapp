@@ -86,7 +86,7 @@ async fn create_test_user(mm: &mut ModelManager) -> Uuid {
 }
 
 pub fn test_user_id() -> Uuid {
-    TEST_USER_ID.lock().unwrap().clone().unwrap()
+    TEST_USER_ID.lock().unwrap().unwrap()
 }
 
 async fn seed_entries(mm: &mut ModelManager) {

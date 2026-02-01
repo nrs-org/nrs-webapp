@@ -120,5 +120,5 @@ pub fn error(
     let reswap = hx_req.then_some(HxReswap(SwapOption::None));
     let push_url = hx_req.then_some(HxPushUrl(false.to_string()));
 
-    (reswap, push_url, html)
+    (code, reswap, push_url, html)
 }
