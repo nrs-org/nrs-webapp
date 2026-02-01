@@ -112,6 +112,8 @@ impl UserOneTimeTokenBmc {
                 .into_table(Self::TABLE_NAME)
                 .bind(create_req.not_none_fields()?)
                 .on_conflict(
+                    // Intentional refresh-on-conflict: unused tokens are rotated and their
+                    // expires_at is extended when re-created for the same (user_id, purpose).
                     OnConflict::columns(["user_id", "purpose"])
                         .target_and_where(Expr::column("last_used_at").is_null())
                         .update_columns(UserOneTimeTokenCreateReq::field_names().iter().copied())
