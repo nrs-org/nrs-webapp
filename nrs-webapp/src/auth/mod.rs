@@ -22,11 +22,14 @@ const AUTH_COOKIE_NAME: &str = "nrs_auth_token";
 /// ```
 /// use axum_extra::extract::SignedCookieJar;
 /// use cookie::Key;
+/// use nrs_webapp::auth::{add_auth_cookie, SessionToken};
+/// use uuid::Uuid;
 ///
 /// let jar = SignedCookieJar::new(Key::generate());
-/// let jar = nrs_webapp::auth::add_auth_cookie(jar, "token123".to_string());
-/// let cookie = jar.get("nrs_auth_token").expect("cookie should be present");
-/// assert_eq!(cookie.value(), "token123");
+/// let user_id = Uuid::new_v4();
+/// let token = SessionToken::new(user_id);
+/// let jar = nrs_webapp::auth::add_auth_cookie(jar, token);
+/// let _cookie = jar.get("nrs_auth_token").expect("cookie should be present");
 /// ```
 pub fn add_auth_cookie(jar: SignedCookieJar, token: SessionToken) -> SignedCookieJar {
     jar.add(
