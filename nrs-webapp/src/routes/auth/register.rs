@@ -2,7 +2,10 @@ use axum::{Router, extract::State, response::IntoResponse, routing::get};
 use axum_client_ip::ClientIp;
 use axum_extra::{TypedHeader, headers::UserAgent};
 use axum_htmx::HxRequest;
-use nrs_webapp_frontend::{maybe_document, views::pages::auth::register::register};
+use nrs_webapp_frontend::{
+    maybe_document,
+    views::pages::auth::register::{RegisterScreen, register},
+};
 use serde::Deserialize;
 use validator::Validate;
 
@@ -54,17 +57,17 @@ pub fn router() -> Router<ModelManager> {
 /// ```
 async fn page(hx_req: HxRequest, DocProps(props): DocProps) -> impl IntoResponse {
     tracing::debug!("{:<12} -- GET auth::register", "ROUTE");
-    maybe_document(hx_req, props, register())
+    maybe_document(hx_req, props, register(RegisterScreen::Regular))
 }
 
 #[derive(Deserialize, Validate)]
-struct RegisterPayload {
+pub(super) struct RegisterPayload {
     #[validate(length(min = 3, max = 20), regex(path=*USERNAME_REGEX))]
-    username: String,
+    pub username: String,
     #[validate(email, length(max = 100))]
-    email: String,
+    pub email: String,
     #[validate(length(min = 8, max = 50), custom(function = validate_password))]
-    password: String,
+    pub password: String,
 }
 
 /// Handles POST submissions of the registration form: validates input, hashes the password, creates a new user, and returns a redirect to the email confirmation page on success.

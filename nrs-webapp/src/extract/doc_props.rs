@@ -9,6 +9,7 @@ use serde::Deserialize;
 
 use crate::{auth::session::Session, toasts::ConstToast};
 
+#[derive(Clone, Default)]
 pub struct DocProps(pub DocumentProps);
 
 #[derive(Default, Deserialize)]

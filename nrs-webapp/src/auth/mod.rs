@@ -1,15 +1,19 @@
 pub mod error;
+pub mod external;
 pub mod session;
 
 use axum_extra::extract::{
-    SignedCookieJar,
+    PrivateCookieJar, SignedCookieJar,
     cookie::{Cookie, SameSite},
 };
 pub use error::{Error, Result};
+use serde::{Deserialize, Serialize};
 
-use crate::{config::AppConfig, crypt::session_token::SessionToken};
+use crate::{auth::external::TokenResponse, config::AppConfig, crypt::session_token::SessionToken};
 
 const AUTH_COOKIE_NAME: &str = "nrs_auth_token";
+const AUTH_FLOW_STATE_COOKIE_NAME: &str = "nrs_auth_flow_state";
+const AUTH_TEMP_TOKENS_COOKIE_NAME: &str = "nrs_temp_tokens";
 
 /// Adds an authentication cookie with the provided token to the given `SignedCookieJar`.
 ///
@@ -84,4 +88,86 @@ pub fn remove_auth_cookie(jar: SignedCookieJar) -> SignedCookieJar {
 /// ```
 pub fn get_auth_cookie(jar: &SignedCookieJar) -> Option<String> {
     jar.get(AUTH_COOKIE_NAME).map(|c| c.value().to_string())
+}
+
+pub fn add_auth_flow_state_cookie(
+    jar: SignedCookieJar,
+    auth_flow_state: &external::AuthFlowState,
+) -> Result<SignedCookieJar> {
+    let state_json = serde_json::to_string(auth_flow_state)?;
+    Ok(jar.add(
+        Cookie::build((AUTH_FLOW_STATE_COOKIE_NAME, state_json))
+            .http_only(true)
+            .secure(!cfg!(debug_assertions))
+            .same_site(SameSite::Lax)
+            .path("/auth/oauth")
+            .max_age(
+                time::Duration::try_from(AppConfig::get().SERVICE_OAUTH_EXPIRY_DURATION)
+                    .expect("negative duration"),
+            ),
+    ))
+}
+
+pub fn remove_auth_flow_state_cookie(jar: SignedCookieJar) -> SignedCookieJar {
+    jar.remove(Cookie::build(AUTH_FLOW_STATE_COOKIE_NAME).path("/auth/oauth"))
+}
+
+pub fn get_auth_flow_state_cookie(jar: &SignedCookieJar) -> Option<external::AuthFlowState> {
+    if let Some(cookie) = jar.get(AUTH_FLOW_STATE_COOKIE_NAME) {
+        match serde_json::from_str(cookie.value()) {
+            Ok(state) => return Some(state),
+            Err(err) => {
+                tracing::warn!(
+                    "Failed to deserialize auth flow state from cookie value: {}",
+                    err
+                );
+            }
+        }
+    }
+
+    None
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct TempTokensCookie {
+    pub tokens: TokenResponse,
+    pub email: Option<String>,
+    pub email_verified: bool,
+    pub subject: String,
+    pub provider_name: String,
+}
+
+pub fn add_temp_tokens_cookie(jar: PrivateCookieJar, tokens: TempTokensCookie) -> PrivateCookieJar {
+    let tokens_json = serde_json::to_string(&tokens).unwrap_or_default();
+    jar.add(
+        Cookie::build((AUTH_TEMP_TOKENS_COOKIE_NAME, tokens_json))
+            .http_only(true)
+            .secure(!cfg!(debug_assertions))
+            .same_site(SameSite::Lax)
+            .path("/auth/oauth")
+            .max_age(
+                time::Duration::try_from(AppConfig::get().SERVICE_OAUTH_EXPIRY_DURATION)
+                    .expect("negative duration"),
+            ),
+    )
+}
+
+pub fn remove_temp_tokens_cookie(jar: PrivateCookieJar) -> PrivateCookieJar {
+    jar.remove(Cookie::build(AUTH_TEMP_TOKENS_COOKIE_NAME).path("/auth/oauth"))
+}
+
+pub fn get_temp_tokens_cookie(jar: &PrivateCookieJar) -> Option<TempTokensCookie> {
+    if let Some(cookie) = jar.get(AUTH_TEMP_TOKENS_COOKIE_NAME) {
+        match serde_json::from_str(cookie.value()) {
+            Ok(tokens) => return Some(tokens),
+            Err(err) => {
+                tracing::warn!(
+                    "Failed to deserialize temp tokens from cookie value: {}",
+                    err
+                );
+            }
+        }
+    }
+
+    None
 }

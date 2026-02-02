@@ -2,6 +2,7 @@ mod confirm_mail;
 mod forgot_password;
 mod login;
 mod logoff;
+mod oauth;
 mod register;
 
 use axum::Router;
@@ -26,6 +27,7 @@ pub fn router() -> Router<ModelManager> {
         .nest("/logoff", logoff::router())
         .nest("/confirmmail", confirm_mail::router())
         .nest("/forgotpass", forgot_password::router())
+        .nest("/oauth", oauth::router())
 }
 
 pub(crate) fn mask_email_for_log(email: &str) -> String {

@@ -3,6 +3,15 @@ use hypertext::prelude::*;
 use super::Form;
 use crate::views::components::link::{Link, LinkParams};
 
+pub enum RegisterScreen {
+    Regular,
+    OAuth {
+        username: Option<String>,
+        email: Option<String>,
+        email_verified: bool,
+    },
+}
+
 /// Render the sign-up form UI fragment.
 ///
 /// The fragment contains username, email, password, and password confirmation inputs with
@@ -13,16 +22,34 @@ use crate::views::components::link::{Link, LinkParams};
 ///
 /// ```
 /// use nrs_webapp_frontend::views::pages::auth::register::register;
-/// let _fragment = register();
+/// use nrs_webapp_frontend::views::pages::auth::register::RegisterScreen;
+/// let _fragment = register(RegisterScreen::Regular);
 /// ```
-pub fn register() -> impl Renderable {
+pub fn register(screen: RegisterScreen) -> impl Renderable {
+    let hx_post = match &screen {
+        RegisterScreen::Regular => "/auth/register",
+        RegisterScreen::OAuth { .. } => "/auth/oauth/register",
+    };
+    let (username, email, email_readonly) = match screen {
+        RegisterScreen::Regular => Default::default(),
+        RegisterScreen::OAuth {
+            username, email, ..
+        } => {
+            let username = username.unwrap_or_default();
+            let (email, email_readonly) = match email {
+                Some(email) => (email, true),
+                None => (String::new(), false),
+            };
+            (username, email, email_readonly)
+        }
+    };
     rsx! {
-        <Form form_id="signup-form" title="Sign up" hx_post="/auth/register">
+        <Form form_id="signup-form" title="Sign up" hx_post=(hx_post)>
             <label class="label" for="signup-username">Username</label>
             <input id="signup-username" name="username" type="text" class="input validator w-full" required placeholder="Username"
                 minlength="3" maxlength="20"
                 pattern="[A-Za-z0-9_\\-]{3,20}" title="3-20 characters: letters, numbers, underscores and dashes"
-                autocomplete="username"
+                autocomplete="username" value=(username)
             />
             <p class="validator-hint hidden">
               "Must be 3 to 20 characters"
@@ -30,7 +57,9 @@ pub fn register() -> impl Renderable {
             </p>
 
             <label class="label" for="signup-email">Email</label>
-            <input id="signup-email" name="email" type="email" class="input validator w-full" required placeholder="Email" autocomplete = "email" />
+            <input id="signup-email" name="email" type="email" class="input validator w-full" required placeholder="Email"
+                autocomplete = "email" value=(email) readonly=(email_readonly)
+            />
             <div class="validator-hint hidden">Please enter a valid email</div>
 
             <label class="label" for="signup-password">Password</label>

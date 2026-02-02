@@ -34,6 +34,11 @@ pub enum Error {
 
     #[error("Method not allowed: {uri}")]
     MethodNotAllowed { uri: Uri },
+
+    // for errors that should never happen, but do
+    // basically when you want to panic but can't
+    #[error("Unexpected error occurred: {0}")]
+    Unexpected(anyhow::Error),
 }
 
 impl From<sqlx::Error> for Error {

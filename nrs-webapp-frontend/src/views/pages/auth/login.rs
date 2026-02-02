@@ -37,15 +37,15 @@ pub fn login() -> impl Renderable {
 
             <div class="divider"></div>
 
-            <button class="btn bg-black text-white border-black">
+            <a href="/auth/oauth/authorize/github" class="btn bg-black text-white border-black">
                 <Github />
                 Login with GitHub
-            </button>
+            </a>
 
-            <button class="btn bg-white text-black border-[#e5e5e5]">
+            <a href="/auth/oauth/authorize/google" class="btn bg-white text-black border-[#e5e5e5]">
                 <Google />
                 Login with Google
-            </button>
+            </a>
         </Form>
     }
 }

@@ -134,12 +134,11 @@ async fn submit(
     };
 
     if user.email_verified_at.is_some() {
-        let token = SessionToken::new(
-            user.id,
-            OffsetDateTime::now_utc() + AppConfig::get().session_expiry_duration(),
-        );
-
-        Ok((HxRedirect("/".into()), add_auth_cookie(jar, token)).into_response())
+        Ok((
+            HxRedirect("/".into()),
+            add_auth_cookie(jar, SessionToken::new(user.id)),
+        )
+            .into_response())
     } else {
         Ok(redirect_to_confirm_mail_page(
             mm, username, ip_addr, user_agent,

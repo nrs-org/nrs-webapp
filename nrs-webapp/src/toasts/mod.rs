@@ -5,6 +5,7 @@ use strum::{EnumString, IntoStaticStr};
 #[derive(EnumString, IntoStaticStr)]
 pub enum ConstToast {
     LoginAgainAfterEmailVerification,
+    LoginAgainAfterEmailVerificationOAuth,
     LoginAgainAfterPasswordReset,
 }
 
@@ -27,6 +28,11 @@ impl From<ConstToast> for Toast {
             ConstToast::LoginAgainAfterEmailVerification => Toast {
                 kind: ToastKind::Success,
                 title: "Email Verified".to_string(),
+                description: rsx! {"Please log in again to continue."}.render(),
+            },
+            ConstToast::LoginAgainAfterEmailVerificationOAuth => Toast {
+                kind: ToastKind::Success,
+                title: "OAuth Account Verified".to_string(),
                 description: rsx! {"Please log in again to continue."}.render(),
             },
             ConstToast::LoginAgainAfterPasswordReset => Toast {

@@ -4,6 +4,7 @@ use anyhow::Context;
 use axum_client_ip::ClientIpSource;
 use base64::{Engine as _, prelude::BASE64_URL_SAFE};
 use serde::Deserialize;
+use url::Url;
 
 #[derive(Debug, Deserialize)]
 pub struct GoogleOAuthConfig {
@@ -17,8 +18,9 @@ pub struct GoogleOAuthConfig {
 #[allow(non_snake_case)]
 pub struct AppConfig {
     pub STATIC_SERVE_DIR: String,
-    pub SERVICE_BASE_URL: String,
+    pub SERVICE_BASE_URL: Url,
     pub SERVICE_DB_URL: String,
+    pub SERVICE_CACHE_DIR: Option<String>,
     pub IP_SOURCE: ClientIpSource,
 
     pub SERVICE_PASSWORD_PEPPER: Vec<u8>,
@@ -28,6 +30,7 @@ pub struct AppConfig {
     pub SERVICE_TOKEN_SECRET: Vec<u8>,
     pub SERVICE_EMAIL_VERIFICATION_EXPIRY_DURATION: Duration,
     pub SERVICE_PASSWORD_RESET_EXPIRY_DURATION: Duration,
+    pub SERVICE_OAUTH_EXPIRY_DURATION: Duration,
     pub RESEND_API_KEY: Option<String>,
 
     pub EMAIL_ACCOUNT_SUPPORT: Option<String>,
@@ -144,8 +147,9 @@ impl AppConfig {
     pub fn load_from_env() -> anyhow::Result<Self> {
         Ok(Self {
             STATIC_SERVE_DIR: Self::get_env("STATIC_SERVE_DIR")?,
-            SERVICE_BASE_URL: Self::get_env("SERVICE_BASE_URL")?,
+            SERVICE_BASE_URL: Self::get_env_parse("SERVICE_BASE_URL")?,
             SERVICE_DB_URL: Self::get_env("SERVICE_DB_URL")?,
+            SERVICE_CACHE_DIR: Self::get_env("SERVICE_CACHE_DIR").ok(),
             IP_SOURCE: Self::get_env_parse::<ClientIpSource>("IP_SOURCE")?,
             SERVICE_PASSWORD_PEPPER: Self::get_env_b64u("SERVICE_PASSWORD_PEPPER")?,
             SERVICE_COOKIE_KEY: Self::get_env_b64u("SERVICE_COOKIE_KEY")?,
@@ -156,6 +160,7 @@ impl AppConfig {
             SERVICE_PASSWORD_RESET_EXPIRY_DURATION: Self::get_env_dur_secs(
                 "SERVICE_PASSWORD_RESET_EXPIRY_SECS",
             )?,
+            SERVICE_OAUTH_EXPIRY_DURATION: Self::get_env_dur_secs("SERVICE_OAUTH_EXPIRY_SECS")?,
             RESEND_API_KEY: Self::get_env("RESEND_API_KEY").ok(),
             SERVICE_TOKEN_SECRET: Self::get_env_b64u("SERVICE_TOKEN_SECRET")?,
             EMAIL_ACCOUNT_SUPPORT: Self::get_env("EMAIL_ACCOUNT_SUPPORT").ok(),
