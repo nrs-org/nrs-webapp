@@ -13,8 +13,8 @@ pub struct AppConfig {
     pub IP_SOURCE: ClientIpSource,
 
     pub SERVICE_PASSWORD_PEPPER: Vec<u8>,
-    pub SERVICE_JWT_SECRET: Vec<u8>,
-    pub SERVICE_JWT_EXPIRY_DURATION: Duration,
+    pub SERVICE_COOKIE_KEY: Vec<u8>,
+    pub SERVICE_SESSION_EXPIRY_DURATION: Duration,
 
     pub SERVICE_TOKEN_SECRET: Vec<u8>,
     pub SERVICE_EMAIL_VERIFICATION_EXPIRY_DURATION: Duration,
@@ -114,8 +114,8 @@ impl AppConfig {
     /// Required environment variables:
     /// - `STATIC_SERVE_DIR`, `SERVICE_DB_URL` (strings)
     /// - `IP_SOURCE` (parsed as `ClientIpSource`)
-    /// - `SERVICE_PASSWORD_PEPPER`, `SERVICE_JWT_SECRET`, `SERVICE_TOKEN_SECRET` (URL-safe base64 decoded to `Vec<u8>`)
-    /// - `SERVICE_JWT_EXPIRY_SECS`, `SERVICE_EMAIL_VERIFICATION_EXPIRY_SECS`, `SERVICE_PASSWORD_RESET_EXPIRY_SECS` (seconds parsed to `std::time::Duration`)
+    /// - `SERVICE_PASSWORD_PEPPER`, `SERVICE_COOKIE_KEY`, `SERVICE_TOKEN_SECRET` (URL-safe base64 decoded to `Vec<u8>`)
+    /// - `SERVICE_SESSION_EXPIRY_SECS`, `SERVICE_EMAIL_VERIFICATION_EXPIRY_SECS`, `SERVICE_PASSWORD_RESET_EXPIRY_SECS` (seconds parsed to `std::time::Duration`)
     ///
     /// Optional environment variables (treated as `Option<String>`):
     /// - `RESEND_API_KEY`, `EMAIL_ACCOUNT_SUPPORT`
@@ -138,8 +138,8 @@ impl AppConfig {
             SERVICE_DB_URL: Self::get_env("SERVICE_DB_URL")?,
             IP_SOURCE: Self::get_env_parse::<ClientIpSource>("IP_SOURCE")?,
             SERVICE_PASSWORD_PEPPER: Self::get_env_b64u("SERVICE_PASSWORD_PEPPER")?,
-            SERVICE_JWT_SECRET: Self::get_env_b64u("SERVICE_JWT_SECRET")?,
-            SERVICE_JWT_EXPIRY_DURATION: Self::get_env_dur_secs("SERVICE_JWT_EXPIRY_SECS")?,
+            SERVICE_COOKIE_KEY: Self::get_env_b64u("SERVICE_COOKIE_KEY")?,
+            SERVICE_SESSION_EXPIRY_DURATION: Self::get_env_dur_secs("SERVICE_SESSION_EXPIRY_SECS")?,
             SERVICE_EMAIL_VERIFICATION_EXPIRY_DURATION: Self::get_env_dur_secs(
                 "SERVICE_EMAIL_VERIFICATION_EXPIRY_SECS",
             )?,
@@ -192,18 +192,18 @@ impl AppConfig {
         time::Duration::try_from(dur).expect("negative duration")
     }
 
-    /// Get the configured JWT expiry as a `time::Duration`.
+    /// Get the configured session expiry as a `time::Duration`.
     ///
-    /// Converts the stored `SERVICE_JWT_EXPIRY_DURATION` (an `std::time::Duration`) into a `time::Duration`.
+    /// Converts the stored `SERVICE_SESSION_EXPIRY_DURATION` (an `std::time::Duration`) into a `time::Duration`.
     ///
     /// # Examples
     ///
     /// ```
-    /// let expiry = AppConfig::get().jwt_expiry_duration();
+    /// let expiry = AppConfig::get().session_expiry_duration();
     /// // `expiry` is a `time::Duration`
     /// ```
-    pub fn jwt_expiry_duration(&self) -> time::Duration {
-        Self::duration_to_time_duration(self.SERVICE_JWT_EXPIRY_DURATION)
+    pub fn session_expiry_duration(&self) -> time::Duration {
+        Self::duration_to_time_duration(self.SERVICE_SESSION_EXPIRY_DURATION)
     }
 
     /// Provides the configured email verification expiry as a `time::Duration`.

@@ -2,40 +2,44 @@ pub mod error;
 pub mod session;
 
 use axum_extra::extract::{
-    CookieJar,
+    SignedCookieJar,
     cookie::{Cookie, SameSite},
 };
 pub use error::{Error, Result};
 
-use crate::config::AppConfig;
+use crate::{config::AppConfig, crypt::session_token::SessionToken};
 
 const AUTH_COOKIE_NAME: &str = "nrs_auth_token";
 
-/// Adds an authentication cookie with the provided token to the given `CookieJar`.
+/// Adds an authentication cookie with the provided token to the given `SignedCookieJar`.
 ///
 /// The cookie is named "nrs_auth_token" and is configured as HTTP-only, uses `SameSite::Lax`,
-/// has path "/", and has a max-age derived from `AppConfig::get().SERVICE_JWT_EXPIRY_DURATION`.
+/// has path "/", and has a max-age derived from `AppConfig::get().SERVICE_SESSION_EXPIRY_DURATION`.
 /// The cookie's `secure` flag is enabled in non-debug builds.
 ///
 /// # Examples
 ///
 /// ```
-/// use axum_extra::extract::CookieJar;
+/// use axum_extra::extract::SignedCookieJar;
+/// use cookie::Key;
+/// use nrs_webapp::auth::{add_auth_cookie, SessionToken};
+/// use uuid::Uuid;
 ///
-/// let jar = CookieJar::new();
-/// let jar = nrs_webapp::auth::add_auth_cookie(jar, "token123".to_string());
-/// let cookie = jar.get("nrs_auth_token").expect("cookie should be present");
-/// assert_eq!(cookie.value(), "token123");
+/// let jar = SignedCookieJar::new(Key::generate());
+/// let user_id = Uuid::new_v4();
+/// let token = SessionToken::new(user_id);
+/// let jar = nrs_webapp::auth::add_auth_cookie(jar, token);
+/// let _cookie = jar.get("nrs_auth_token").expect("cookie should be present");
 /// ```
-pub fn add_auth_cookie(jar: CookieJar, token: String) -> CookieJar {
+pub fn add_auth_cookie(jar: SignedCookieJar, token: SessionToken) -> SignedCookieJar {
     jar.add(
-        Cookie::build((AUTH_COOKIE_NAME, token))
+        Cookie::build((AUTH_COOKIE_NAME, token.to_string()))
             .http_only(true)
             .secure(!cfg!(debug_assertions))
             .same_site(SameSite::Lax)
             .path("/")
             .max_age(
-                time::Duration::try_from(AppConfig::get().SERVICE_JWT_EXPIRY_DURATION)
+                time::Duration::try_from(AppConfig::get().SERVICE_SESSION_EXPIRY_DURATION)
                     .expect("negative duration"),
             ),
     )
@@ -45,21 +49,22 @@ pub fn add_auth_cookie(jar: CookieJar, token: String) -> CookieJar {
 ///
 /// # Returns
 ///
-/// The updated `CookieJar` with the authentication cookie removed.
+/// The updated `SignedCookieJar` with the authentication cookie removed.
 ///
 /// # Examples
 ///
 /// ```
-/// use axum_extra::extract::CookieJar;
+/// use axum_extra::extract::SignedCookieJar;
+/// use cookie::Key;
 ///
-/// let jar = CookieJar::new();
+/// let jar = SignedCookieJar::new(Key::generate());
 /// let jar = remove_auth_cookie(jar);
 /// ```
-pub fn remove_auth_cookie(jar: CookieJar) -> CookieJar {
+pub fn remove_auth_cookie(jar: SignedCookieJar) -> SignedCookieJar {
     jar.remove(Cookie::build(AUTH_COOKIE_NAME).path("/"))
 }
 
-/// Retrieve the authentication cookie value from a `CookieJar`.
+/// Retrieve the authentication cookie value from a `SignedCookieJar`.
 ///
 /// # Returns
 ///
@@ -68,14 +73,15 @@ pub fn remove_auth_cookie(jar: CookieJar) -> CookieJar {
 /// # Examples
 ///
 /// ```no_run
-/// use axum_extra::extract::CookieJar;
+/// use axum_extra::extract::SignedCookieJar;
+/// use cookie::Key;
 /// use nrs_webapp::auth::get_auth_cookie;
 ///
-/// let jar = CookieJar::new();
+/// let jar = SignedCookieJar::new(Key::generate());
 /// // assume a cookie named "nrs_auth_token" was previously added to `jar`
 /// let value = get_auth_cookie(&jar);
 /// assert!(value.is_none() || value.is_some());
 /// ```
-pub fn get_auth_cookie(jar: &CookieJar) -> Option<String> {
+pub fn get_auth_cookie(jar: &SignedCookieJar) -> Option<String> {
     jar.get(AUTH_COOKIE_NAME).map(|c| c.value().to_string())
 }

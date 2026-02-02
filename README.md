@@ -18,15 +18,15 @@ STATIC_SERVE_DIR = "nrs-webapp/static"
 
 # app secrets, should be stored securely in prod
 SERVICE_PASSWORD_PEPPER = "jIYb9KCTzZpdqbKM_e9DwcJzCefzvnAUGZzD_WH029OXbyMnn5nyUWerd_NPWrVNKKwDM6rEzmipNuFNdJ8vKej1XEb5dD2NzKwSWTNqiQKgRph6rVABcIrybPAjC31wN-7rfpQYoB1oZyYb5wl1meNgDzwjpLfpBL90R89BGx8="
-SERVICE_JWT_SECRET = "ub3lweHTzpWiVZyVrskQjcsRqRlNTFGbHMaTYec97AIFJ2wg05FYyXVjI9as9MqE19Ur5ztCWfZDPMjwxycZZlD48SeMbzH0ppxJSLgxCYTotPO79Tf1lH7IkM27ujBiiHS_MUMgFA9zKdDC9bYhHEXug6XFt-2_ZkrmNEhU_Wo="
-SERVICE_JWT_EXPIRY_SECS = "1800"
+SERVICE_COOKIE_KEY = "ub3lweHTzpWiVZyVrskQjcsRqRlNTFGbHMaTYec97AIFJ2wg05FYyXVjI9as9MqE19Ur5ztCWfZDPMjwxycZZlD48SeMbzH0ppxJSLgxCYTotPO79Tf1lH7IkM27ujBiiHS_MUMgFA9zKdDC9bYhHEXug6XFt-2_ZkrmNEhU_Wo="
+SERVICE_SESSION_EXPIRY_SECS = "1800"
 ```
 
 > [!WARNING]
 > In production, make sure to store secrets securely. DO NOT use the above
 > dev-only values in a production environment.
 
-To generate password pepper and JWT secret values, use the `nrs-webapp-keygen`
+To generate password pepper and secret values, use the `nrs-webapp-keygen`
 binary crate.
 
 ```sh

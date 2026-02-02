@@ -50,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
     _dev_utils::init_dev().await;
 
     let mm = ModelManager::new().await?;
-    let routes = router(mm);
+    let routes = router(mm.clone()).with_state(mm);
 
     let addr = "0.0.0.0:3621";
     let listener = tokio::net::TcpListener::bind(addr).await?;

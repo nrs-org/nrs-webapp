@@ -5,7 +5,7 @@ use axum::response::{Sse, sse::Event};
 use tokio::time::interval;
 use tokio_stream::{StreamExt, wrappers::IntervalStream};
 
-pub fn dev_router() -> Router {
+pub fn dev_router<S: Clone + Send + Sync + 'static>() -> Router<S> {
     Router::new().route(
         "/livereload",
         get(|| async {
