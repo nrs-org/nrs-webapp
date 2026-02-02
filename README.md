@@ -26,7 +26,7 @@ SERVICE_SESSION_EXPIRY_SECS = "1800"
 > In production, make sure to store secrets securely. DO NOT use the above
 > dev-only values in a production environment.
 
-To generate password pepper and JWT secret values, use the `nrs-webapp-keygen`
+To generate password pepper and secret values, use the `nrs-webapp-keygen`
 binary crate.
 
 ```sh

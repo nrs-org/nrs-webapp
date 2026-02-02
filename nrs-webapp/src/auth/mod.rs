@@ -61,7 +61,7 @@ pub fn remove_auth_cookie(jar: SignedCookieJar) -> SignedCookieJar {
     jar.remove(Cookie::build(AUTH_COOKIE_NAME).path("/"))
 }
 
-/// Retrieve the authentication cookie value from a `CookieJar`.
+/// Retrieve the authentication cookie value from a `SignedCookieJar`.
 ///
 /// # Returns
 ///
