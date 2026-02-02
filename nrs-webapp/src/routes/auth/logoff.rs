@@ -3,7 +3,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::post,
 };
-use axum_extra::extract::{SignedCookieJar, cookie::Key};
+use axum_extra::extract::SignedCookieJar;
 use axum_htmx::HxRedirect;
 use serde::Deserialize;
 
