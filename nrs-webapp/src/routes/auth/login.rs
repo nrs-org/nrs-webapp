@@ -76,7 +76,7 @@ struct LoginUser {
 /// Handle POST submissions to the login endpoint.
 ///
 /// Authenticates the provided username and password; if credentials are valid and the
-/// account's email is verified, issues a JWT, attaches an authentication cookie and
+/// account's email is verified, issues a session token, attaches an authentication cookie and
 /// redirects to the application root. If credentials are valid but the email is not
 /// verified, redirects to the email confirmation page. If authentication fails, returns
 /// an authentication error.

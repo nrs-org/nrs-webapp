@@ -8,7 +8,7 @@ use crate::{
 
 /// Middleware that attaches an authenticated Session to request extensions when a valid auth cookie is present.
 ///
-/// If an auth cookie exists and the JWT verifies successfully, a `Session` constructed from the token claims
+/// If an auth cookie exists and the session token parses and validates successfully, a `Session` constructed from the token
 /// is inserted into the request's extensions. The request is forwarded to the next handler regardless of
 /// whether a session was inserted; the middleware returns the response produced by the next handler.
 ///
