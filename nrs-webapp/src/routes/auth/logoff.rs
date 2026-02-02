@@ -3,7 +3,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::post,
 };
-use axum_extra::extract::CookieJar;
+use axum_extra::extract::SignedCookieJar;
 use axum_htmx::HxRedirect;
 use serde::Deserialize;
 
@@ -45,7 +45,7 @@ struct LogoffPayload {
 /// # });
 /// ```
 async fn submit(
-    jar: CookieJar,
+    jar: SignedCookieJar,
     WRForm(LogoffPayload { logoff }): WRForm<LogoffPayload>,
 ) -> Response {
     tracing::debug!("{:<12} -- POST auth::logoff -- logoff: {}", "ROUTE", logoff);

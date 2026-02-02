@@ -1,4 +1,7 @@
-use crate::model::store::{Db, new_db_pool, primary_store::PrimaryStore};
+use crate::{
+    config::AppConfig,
+    model::store::{Db, new_db_pool, primary_store::PrimaryStore},
+};
 
 pub mod entity;
 pub mod entry;
@@ -7,6 +10,8 @@ mod store;
 pub mod token;
 pub mod user;
 
+use axum::extract::FromRef;
+use axum_extra::extract::cookie::Key;
 pub use error::{Error, Result};
 use sqlx::{Database, Transaction};
 
@@ -77,4 +82,10 @@ impl<'t> PrimaryStore for Transaction<'t, SqlxDatabase> {
         = &'a mut <SqlxDatabase as Database>::Connection
     where
         Self: 'a;
+}
+
+impl FromRef<ModelManager> for Key {
+    fn from_ref(_: &ModelManager) -> Self {
+        Key::from(&AppConfig::get().SERVICE_JWT_SECRET)
+    }
 }

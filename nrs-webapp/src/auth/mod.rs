@@ -2,12 +2,12 @@ pub mod error;
 pub mod session;
 
 use axum_extra::extract::{
-    CookieJar,
+    SignedCookieJar,
     cookie::{Cookie, SameSite},
 };
 pub use error::{Error, Result};
 
-use crate::config::AppConfig;
+use crate::{config::AppConfig, crypt::session_token::SessionToken};
 
 const AUTH_COOKIE_NAME: &str = "nrs_auth_token";
 
@@ -27,9 +27,9 @@ const AUTH_COOKIE_NAME: &str = "nrs_auth_token";
 /// let cookie = jar.get("nrs_auth_token").expect("cookie should be present");
 /// assert_eq!(cookie.value(), "token123");
 /// ```
-pub fn add_auth_cookie(jar: CookieJar, token: String) -> CookieJar {
+pub fn add_auth_cookie(jar: SignedCookieJar, token: SessionToken) -> SignedCookieJar {
     jar.add(
-        Cookie::build((AUTH_COOKIE_NAME, token))
+        Cookie::build((AUTH_COOKIE_NAME, token.to_string()))
             .http_only(true)
             .secure(!cfg!(debug_assertions))
             .same_site(SameSite::Lax)
@@ -55,7 +55,7 @@ pub fn add_auth_cookie(jar: CookieJar, token: String) -> CookieJar {
 /// let jar = CookieJar::new();
 /// let jar = remove_auth_cookie(jar);
 /// ```
-pub fn remove_auth_cookie(jar: CookieJar) -> CookieJar {
+pub fn remove_auth_cookie(jar: SignedCookieJar) -> SignedCookieJar {
     jar.remove(Cookie::build(AUTH_COOKIE_NAME).path("/"))
 }
 
@@ -76,6 +76,6 @@ pub fn remove_auth_cookie(jar: CookieJar) -> CookieJar {
 /// let value = get_auth_cookie(&jar);
 /// assert!(value.is_none() || value.is_some());
 /// ```
-pub fn get_auth_cookie(jar: &CookieJar) -> Option<String> {
+pub fn get_auth_cookie(jar: &SignedCookieJar) -> Option<String> {
     jar.get(AUTH_COOKIE_NAME).map(|c| c.value().to_string())
 }

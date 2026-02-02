@@ -21,14 +21,13 @@ use crate::model::ModelManager;
 /// let mm = /* ModelManager::new(...) */ todo!();
 /// let auth_router = router(mm);
 /// ```
-pub fn router(mm: ModelManager) -> Router {
+pub fn router() -> Router<ModelManager> {
     Router::new()
         .nest("/login", login::router())
         .nest("/register", register::router())
         .nest("/logoff", logoff::router())
         .nest("/confirmmail", confirm_mail::router())
         .nest("/forgotpass", forgot_password::router())
-        .with_state(mm)
 }
 
 pub(crate) fn mask_email_for_log(email: &str) -> String {

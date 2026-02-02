@@ -45,14 +45,14 @@ use crate::{
 /// let app = router(mm);
 /// // `app` can now be converted into a hyper service and served.
 /// ```
-pub fn router(mm: ModelManager) -> Router {
-    let mut router = Router::new()
+pub fn router(mm: ModelManager) -> Router<ModelManager> {
+    let mut router = Router::<ModelManager>::new()
         .route("/", get(home))
-        .nest("/auth", auth::router(mm))
+        .nest("/auth", auth::router())
         .fallback(fallback_handler)
         .method_not_allowed_fallback(method_not_allowed_fallback_handler)
         .layer(axum::middleware::map_response(mw_res_mapper))
-        .layer(axum::middleware::from_fn(mw_req_session))
+        .layer(axum::middleware::from_fn_with_state(mm, mw_req_session))
         .layer(axum::middleware::from_fn(mw_req_stamp))
         .layer(AppConfig::get().IP_SOURCE.clone().into_extension())
         .nest_service("/static", static_serve::service());

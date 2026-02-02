@@ -5,7 +5,7 @@ use axum::{
     routing::get,
 };
 use axum_client_ip::ClientIp;
-use axum_extra::{TypedHeader, extract::CookieJar, headers::UserAgent};
+use axum_extra::{TypedHeader, extract::SignedCookieJar, headers::UserAgent};
 use axum_htmx::{HxRedirect, HxRequest};
 use nrs_webapp_frontend::{maybe_document, views::pages::auth::login::login};
 use serde::Deserialize;
@@ -18,7 +18,8 @@ use validator::Validate;
 use crate::{
     Error, Result,
     auth::{self, add_auth_cookie, error::LoginError},
-    crypt::{jwt::JwtContext, password_hash::PasswordHasher},
+    config::AppConfig,
+    crypt::{password_hash::PasswordHasher, session_token::SessionToken},
     extract::{doc_props::DocProps, with_rejection::WRForm},
     model::{ModelManager, user::UserBmc},
     routes::auth::confirm_mail::redirect_to_confirm_mail_page,
@@ -103,7 +104,7 @@ struct LoginUser {
 /// ```
 async fn submit(
     State(mut mm): State<ModelManager>,
-    jar: CookieJar,
+    jar: SignedCookieJar,
     ClientIp(ip_addr): ClientIp,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
     WRForm(LoginPayload { username, password }): WRForm<LoginPayload>,
@@ -133,9 +134,10 @@ async fn submit(
     };
 
     if user.email_verified_at.is_some() {
-        let jwt = JwtContext::get_from_config();
-        let claims = jwt.generate_claims(user.id);
-        let token = jwt.sign(&claims)?;
+        let token = SessionToken::new(
+            user.id,
+            OffsetDateTime::now_utc() + AppConfig::get().jwt_expiry_duration(),
+        );
 
         Ok((HxRedirect("/".into()), add_auth_cookie(jar, token)).into_response())
     } else {
