@@ -11,7 +11,7 @@ use crate::{config::AppConfig, crypt::session_token::SessionToken};
 
 const AUTH_COOKIE_NAME: &str = "nrs_auth_token";
 
-/// Adds an authentication cookie with the provided token to the given `CookieJar`.
+/// Adds an authentication cookie with the provided token to the given `SignedCookieJar`.
 ///
 /// The cookie is named "nrs_auth_token" and is configured as HTTP-only, uses `SameSite::Lax`,
 /// has path "/", and has a max-age derived from `AppConfig::get().SERVICE_JWT_EXPIRY_DURATION`.
@@ -20,9 +20,10 @@ const AUTH_COOKIE_NAME: &str = "nrs_auth_token";
 /// # Examples
 ///
 /// ```
-/// use axum_extra::extract::CookieJar;
+/// use axum_extra::extract::SignedCookieJar;
+/// use cookie::Key;
 ///
-/// let jar = CookieJar::new();
+/// let jar = SignedCookieJar::new(Key::generate());
 /// let jar = nrs_webapp::auth::add_auth_cookie(jar, "token123".to_string());
 /// let cookie = jar.get("nrs_auth_token").expect("cookie should be present");
 /// assert_eq!(cookie.value(), "token123");
@@ -45,14 +46,15 @@ pub fn add_auth_cookie(jar: SignedCookieJar, token: SessionToken) -> SignedCooki
 ///
 /// # Returns
 ///
-/// The updated `CookieJar` with the authentication cookie removed.
+/// The updated `SignedCookieJar` with the authentication cookie removed.
 ///
 /// # Examples
 ///
 /// ```
-/// use axum_extra::extract::CookieJar;
+/// use axum_extra::extract::SignedCookieJar;
+/// use cookie::Key;
 ///
-/// let jar = CookieJar::new();
+/// let jar = SignedCookieJar::new(Key::generate());
 /// let jar = remove_auth_cookie(jar);
 /// ```
 pub fn remove_auth_cookie(jar: SignedCookieJar) -> SignedCookieJar {
@@ -68,10 +70,11 @@ pub fn remove_auth_cookie(jar: SignedCookieJar) -> SignedCookieJar {
 /// # Examples
 ///
 /// ```no_run
-/// use axum_extra::extract::CookieJar;
+/// use axum_extra::extract::SignedCookieJar;
+/// use cookie::Key;
 /// use nrs_webapp::auth::get_auth_cookie;
 ///
-/// let jar = CookieJar::new();
+/// let jar = SignedCookieJar::new(Key::generate());
 /// // assume a cookie named "nrs_auth_token" was previously added to `jar`
 /// let value = get_auth_cookie(&jar);
 /// assert!(value.is_none() || value.is_some());
