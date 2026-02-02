@@ -3,7 +3,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::post,
 };
-use axum_extra::extract::SignedCookieJar;
+use axum_extra::extract::{SignedCookieJar, cookie::Key};
 use axum_htmx::HxRedirect;
 use serde::Deserialize;
 
@@ -28,18 +28,19 @@ struct LogoffPayload {
 
 /// Handle a form-based logoff request by optionally clearing the auth cookie and redirecting to the home page.
 ///
-/// If the submitted `logoff` value is `false`, this returns an empty response. If `logoff` is `true`, this removes the authentication cookie from the provided `CookieJar` and returns a redirect to "/".
+/// If the submitted `logoff` value is `false`, this returns an empty response. If `logoff` is `true`, this removes the authentication cookie from the provided `SignedCookieJar` and returns a redirect to "/".
 ///
 /// # Examples
 ///
 /// ```
-/// # use axum_extra::extract::CookieJar;
+/// # use axum_extra::extract::SignedCookieJar;
+/// # use cookie::Key;
 /// # use axum_extra::extract::Form as WRForm;
 /// # use axum::response::Response;
 /// # use nrs_webapp::routes::auth::logoff::{submit, LogoffPayload};
 /// #
 /// # tokio::runtime::Runtime::new().unwrap().block_on(async {
-/// let jar = CookieJar::new();
+/// let jar = SignedCookieJar::new(Key::generate());
 /// let form = WRForm(LogoffPayload { logoff: true });
 /// let _resp: Response = submit(jar, form).await;
 /// # });
