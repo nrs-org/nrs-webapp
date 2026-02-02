@@ -14,7 +14,7 @@ const AUTH_COOKIE_NAME: &str = "nrs_auth_token";
 /// Adds an authentication cookie with the provided token to the given `SignedCookieJar`.
 ///
 /// The cookie is named "nrs_auth_token" and is configured as HTTP-only, uses `SameSite::Lax`,
-/// has path "/", and has a max-age derived from `AppConfig::get().SERVICE_JWT_EXPIRY_DURATION`.
+/// has path "/", and has a max-age derived from `AppConfig::get().SERVICE_SESSION_EXPIRY_DURATION`.
 /// The cookie's `secure` flag is enabled in non-debug builds.
 ///
 /// # Examples
@@ -36,7 +36,7 @@ pub fn add_auth_cookie(jar: SignedCookieJar, token: SessionToken) -> SignedCooki
             .same_site(SameSite::Lax)
             .path("/")
             .max_age(
-                time::Duration::try_from(AppConfig::get().SERVICE_JWT_EXPIRY_DURATION)
+                time::Duration::try_from(AppConfig::get().SERVICE_SESSION_EXPIRY_DURATION)
                     .expect("negative duration"),
             ),
     )

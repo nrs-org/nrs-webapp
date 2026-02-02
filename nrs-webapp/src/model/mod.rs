@@ -86,6 +86,6 @@ impl<'t> PrimaryStore for Transaction<'t, SqlxDatabase> {
 
 impl FromRef<ModelManager> for Key {
     fn from_ref(_: &ModelManager) -> Self {
-        Key::from(&AppConfig::get().SERVICE_JWT_SECRET)
+        Key::from(&AppConfig::get().SERVICE_COOKIE_KEY)
     }
 }

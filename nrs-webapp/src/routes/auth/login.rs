@@ -88,7 +88,7 @@ struct LoginUser {
 ///   user's email is not verified).
 /// - `Err(Error::Auth(LoginError::InvalidCredentials))` — when the username/password
 ///   combination is invalid. Other errors from downstream operations (database access,
-///   hashing, or JWT signing) are propagated as `Err`.
+///   or hashing) are propagated as `Err`.
 ///
 /// # Examples
 ///
@@ -136,7 +136,7 @@ async fn submit(
     if user.email_verified_at.is_some() {
         let token = SessionToken::new(
             user.id,
-            OffsetDateTime::now_utc() + AppConfig::get().jwt_expiry_duration(),
+            OffsetDateTime::now_utc() + AppConfig::get().session_expiry_duration(),
         );
 
         Ok((HxRedirect("/".into()), add_auth_cookie(jar, token)).into_response())

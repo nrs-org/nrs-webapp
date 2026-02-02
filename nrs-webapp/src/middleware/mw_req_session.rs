@@ -24,8 +24,6 @@ use crate::{
 pub async fn mw_req_session(jar: SignedCookieJar, mut req: Request, next: Next) -> Response {
     tracing::debug!("{:<12} -- mw_req_session", "MIDDLEWARE");
 
-    tracing::debug!("{:?}", get_auth_cookie(&jar));
-
     if let Some(token) = get_auth_cookie(&jar)
         && let Ok(token) = token.parse::<SessionToken>()
         && let Ok(user_id) = token.validate()
