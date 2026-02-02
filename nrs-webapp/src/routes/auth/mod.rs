@@ -36,3 +36,8 @@ pub(crate) fn mask_email_for_log(email: &str) -> String {
         "<redacted-email>".to_string()
     }
 }
+
+pub(crate) fn mask_username_for_log(username: &str) -> String {
+    let first = username.chars().next().unwrap_or('*');
+    format!("{}***", first)
+}

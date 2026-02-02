@@ -14,7 +14,9 @@ use crate::{
         ModelManager,
         user::{UserBmc, UserForCreate},
     },
-    routes::auth::confirm_mail::redirect_to_confirm_mail_page,
+    routes::auth::{
+        confirm_mail::redirect_to_confirm_mail_page, mask_email_for_log, mask_username_for_log,
+    },
     validate::auth::{USERNAME_REGEX, validate_password},
 };
 
@@ -90,8 +92,8 @@ async fn submit(
     tracing::debug!(
         "{:<12} -- POST auth::register -- username: {}, email: {}",
         "ROUTE",
-        username,
-        email
+        mask_username_for_log(&username),
+        mask_email_for_log(&email)
     );
 
     let password_hash = PasswordHasher::get_from_config().encrypt_password(&password)?;

@@ -22,7 +22,7 @@ use crate::{
     crypt::{password_hash::PasswordHasher, session_token::SessionToken},
     extract::{doc_props::DocProps, with_rejection::WRForm},
     model::{ModelManager, user::UserBmc},
-    routes::auth::confirm_mail::redirect_to_confirm_mail_page,
+    routes::auth::{confirm_mail::redirect_to_confirm_mail_page, mask_username_for_log},
 };
 
 /// Create a router that mounts the login page and submission handlers at the root path.
@@ -112,7 +112,7 @@ async fn submit(
     tracing::debug!(
         "{:<12} -- POST auth::login -- username: {}",
         "ROUTE",
-        username
+        mask_username_for_log(&username)
     );
 
     let user: Option<LoginUser> = UserBmc::get_by_username(&mut mm, &username).await?;

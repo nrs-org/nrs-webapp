@@ -34,6 +34,7 @@ use crate::{
         token::{TokenPurpose, UserOneTimeTokenBmc, UserOneTimeTokenCreateReq},
         user::UserBmc,
     },
+    routes::auth::mask_username_for_log,
     toast_on_page_load,
     toasts::ConstToast,
 };
@@ -281,7 +282,7 @@ async fn send_confirm_email_inner(
     tracing::debug!(
         "{:<12} -- send_confirm_email -- username: {}",
         "FOR-DEV-ONLY",
-        username
+        mask_username_for_log(&username)
     );
 
     RATE_LIMITER
@@ -329,7 +330,7 @@ async fn send_confirm_email_inner(
         tracing::debug!(
             "{:<12} -- send_confirm_email -- No unverified user found with username: {}",
             "FOR-DEV-ONLY",
-            username
+            mask_username_for_log(&username)
         );
     }
 
