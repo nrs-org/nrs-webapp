@@ -15,3 +15,5 @@ SERVICE_EMAIL_VERIFICATION_EXPIRY_SECS = "86400"
 SERVICE_PASSWORD_RESET_EXPIRY_SECS = "900"
 
 VGMDB_API_ENDPOINT = "http://localhost:2999"
+
+GOOGLE_OAUTH_CREDENTIALS_PATH = { value = "secrets/google_oauth_credentials.json", relative = true }

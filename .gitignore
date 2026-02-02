@@ -2,3 +2,4 @@
 /.direnv
 /.envrc
 /.pre-commit-config.yaml
+/secrets

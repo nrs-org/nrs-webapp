@@ -1,8 +1,17 @@
-use std::{str::FromStr, sync::OnceLock, time::Duration};
+use std::{fs::File, str::FromStr, sync::OnceLock, time::Duration};
 
 use anyhow::Context;
 use axum_client_ip::ClientIpSource;
 use base64::{Engine as _, prelude::BASE64_URL_SAFE};
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize)]
+pub struct GoogleOAuthConfig {
+    pub client_id: String,
+    pub client_secret: String,
+    pub auth_uri: String,
+    pub token_uri: String,
+}
 
 #[derive(Debug)]
 #[allow(non_snake_case)]
@@ -22,6 +31,7 @@ pub struct AppConfig {
     pub RESEND_API_KEY: Option<String>,
 
     pub EMAIL_ACCOUNT_SUPPORT: Option<String>,
+    pub GOOGLE_OAUTH_CREDENTIALS: Option<GoogleOAuthConfig>,
 }
 
 impl AppConfig {
@@ -149,6 +159,9 @@ impl AppConfig {
             RESEND_API_KEY: Self::get_env("RESEND_API_KEY").ok(),
             SERVICE_TOKEN_SECRET: Self::get_env_b64u("SERVICE_TOKEN_SECRET")?,
             EMAIL_ACCOUNT_SUPPORT: Self::get_env("EMAIL_ACCOUNT_SUPPORT").ok(),
+            GOOGLE_OAUTH_CREDENTIALS: Self::load_google_oauth_config()
+                .inspect_err(|err| tracing::warn!("GOOGLE_OAUTH_CREDENTIALS not loaded: {err:?}"))
+                .ok(),
         })
     }
 
@@ -235,5 +248,22 @@ impl AppConfig {
     /// ```
     pub fn password_reset_expiry_duration(&self) -> time::Duration {
         Self::duration_to_time_duration(self.SERVICE_PASSWORD_RESET_EXPIRY_DURATION)
+    }
+
+    fn load_google_oauth_config() -> anyhow::Result<GoogleOAuthConfig> {
+        #[derive(Deserialize)]
+        struct GoogleOAuthConfigWrapped {
+            web: GoogleOAuthConfig,
+        }
+
+        let path = Self::get_env("GOOGLE_OAUTH_CREDENTIALS_PATH")?;
+        tracing::info!("Loading Google OAuth credentials from {}", path);
+        let credentials =
+            serde_json::from_reader::<_, GoogleOAuthConfigWrapped>(File::open(&path)?)
+                .with_context(|| {
+                    format!("Failed to read Google OAuth credentials from {}", path)
+                })?;
+
+        Ok(credentials.web)
     }
 }
