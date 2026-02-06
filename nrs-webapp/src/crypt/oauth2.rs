@@ -7,7 +7,7 @@ pub const DEFAULT_STATE_LENGTH: usize = 32;
 pub fn generate_state<const N: usize>() -> Result<String> {
     let mut bytes = [0u8; N];
     OsRng.try_fill_bytes(&mut bytes)?;
-    Ok(BASE64_URL_SAFE_NO_PAD.encode(&bytes))
+    Ok(BASE64_URL_SAFE_NO_PAD.encode(bytes))
 }
 
 pub struct PkcePair {
@@ -19,7 +19,7 @@ pub struct PkcePair {
 pub fn generate_pkce_verifier<const N: usize>() -> Result<String> {
     let mut bytes = [0u8; N];
     OsRng.try_fill_bytes(&mut bytes)?;
-    Ok(BASE64_URL_SAFE_NO_PAD.encode(&bytes))
+    Ok(BASE64_URL_SAFE_NO_PAD.encode(bytes))
 }
 
 pub trait PkceMethod {

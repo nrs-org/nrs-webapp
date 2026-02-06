@@ -39,8 +39,6 @@ use crate::{
         user::{UserBmc, UserForCreate},
     },
     routes::auth::{confirm_mail::redirect_to_confirm_mail_page, register::RegisterPayload},
-    toast_on_page_load,
-    toasts::ConstToast,
 };
 use crate::{auth, model::ModelManager};
 

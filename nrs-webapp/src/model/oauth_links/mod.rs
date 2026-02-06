@@ -1,6 +1,5 @@
 use sea_query::{Expr, ExprTrait, IntoColumnRef, Query, ReturningClause};
 use sqlbindable::{BindContext, Fields, HasFields};
-use sqlx::FromRow;
 use time::OffsetDateTime;
 use uuid::Uuid;
 

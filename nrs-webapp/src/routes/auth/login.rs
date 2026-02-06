@@ -18,7 +18,6 @@ use validator::Validate;
 use crate::{
     Error, Result,
     auth::{self, add_auth_cookie, error::LoginError},
-    config::AppConfig,
     crypt::{password_hash::PasswordHasher, session_token::SessionToken},
     extract::{doc_props::DocProps, with_rejection::WRForm},
     model::{ModelManager, user::UserBmc},

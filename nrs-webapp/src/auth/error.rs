@@ -1,4 +1,4 @@
-use oauth2::{ConfigurationError, RequestTokenError, basic::BasicRequestTokenError};
+use oauth2::{ConfigurationError, basic::BasicRequestTokenError};
 use openidconnect::{ClaimsVerificationError, DiscoveryError};
 use thiserror::Error;
 
