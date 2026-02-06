@@ -34,7 +34,7 @@ pub(crate) fn mask_email_for_log(email: &str) -> String {
     if let Some((local, domain)) = email.split_once('@') {
         let first = local.chars().next().unwrap_or('*');
         let domain_masked = if let Some((_, tld)) = domain.rsplit_once('.') {
-            format!("***. {}", tld)
+            format!("***.{}", tld)
         } else {
             "***".to_string()
         };
