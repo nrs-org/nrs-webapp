@@ -13,15 +13,21 @@ pub struct SymmetricCipher {
 }
 
 impl SymmetricCipher {
-    pub fn new(key: &[u8]) -> Self {
-        Self {
-            cipher: Aes256Gcm::new_from_slice(key).unwrap(),
-        }
+    pub fn new(key: &[u8]) -> core::result::Result<Self, anyhow::Error> {
+        Ok(Self {
+            cipher: Aes256Gcm::new_from_slice(key)?,
+        })
     }
 
     pub fn get_from_config() -> &'static Self {
         static INSTANCE: OnceLock<SymmetricCipher> = OnceLock::new();
-        INSTANCE.get_or_init(|| SymmetricCipher::new(&AppConfig::get().SERVICE_ENCRYPTION_KEY))
+        // nrs-keygen currently generates fixed-length 128-byte keys, so to avoid the
+        // InvalidLength error we only use the first 32 bytes.
+        // TODO: address this
+        INSTANCE.get_or_init(|| {
+            SymmetricCipher::new(&AppConfig::get().SERVICE_ENCRYPTION_KEY[0..32])
+                .expect("invalid symmetric encryption key")
+        })
     }
 
     pub fn encrypt(&self, plaintext: &[u8]) -> Result<Vec<u8>> {
