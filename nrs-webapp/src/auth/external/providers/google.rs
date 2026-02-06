@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use crate::auth::external::{
     AuthFlowState, AuthProvider, AuthorizeUrl, IdToken, TokenResponse, UserIdentity,
 };

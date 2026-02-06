@@ -5,7 +5,7 @@ use axum::{
     Router,
     extract::State,
     http::StatusCode,
-    response::{IntoResponse, Redirect, Response},
+    response::{IntoResponse, Redirect},
     routing::get,
 };
 use axum_client_ip::ClientIp;
