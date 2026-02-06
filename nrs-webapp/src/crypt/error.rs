@@ -20,6 +20,9 @@ pub enum Error {
 
     #[error("Token has expired")]
     TokenExpired,
+
+    #[error("Ciphertext too short")]
+    CiphertextTooShort,
 }
 
 pub type Result<T> = core::result::Result<T, Error>;

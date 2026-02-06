@@ -2,9 +2,9 @@ use std::sync::OnceLock;
 
 use crate::config::AppConfig;
 
-use super::Result;
+use super::{Error, Result};
 use aes_gcm::{
-    AeadCore, Aes256Gcm, KeyInit,
+    AeadCore, Aes256Gcm, KeyInit, Nonce,
     aead::{Aead, OsRng},
 };
 
@@ -32,6 +32,20 @@ impl SymmetricCipher {
 
     pub fn encrypt(&self, plaintext: &[u8]) -> Result<Vec<u8>> {
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
-        Ok(self.cipher.encrypt(&nonce, plaintext)?)
+        let mut ciphertext = self.cipher.encrypt(&nonce, plaintext)?;
+        ciphertext.extend_from_slice(&nonce);
+        Ok(ciphertext)
+    }
+
+    pub fn decrypt(&self, ciphertext_with_nonce: &[u8]) -> Result<Vec<u8>> {
+        const NONCE_SIZE: usize = std::mem::size_of::<Nonce<<Aes256Gcm as AeadCore>::NonceSize>>();
+        if ciphertext_with_nonce.len() < NONCE_SIZE {
+            return Err(Error::CiphertextTooShort);
+        }
+        let (ciphertext, nonce_bytes) =
+            ciphertext_with_nonce.split_at(ciphertext_with_nonce.len() - NONCE_SIZE);
+        let nonce = aes_gcm::Nonce::from_slice(nonce_bytes);
+        let plaintext = self.cipher.decrypt(nonce, ciphertext)?;
+        Ok(plaintext)
     }
 }
