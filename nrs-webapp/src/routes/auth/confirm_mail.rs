@@ -81,14 +81,14 @@ pub fn redirect_to_confirm_mail_page(
     username: String,
     ip_addr: IpAddr,
     user_agent: UserAgent,
-) -> Response {
+) -> (HxRedirect, StatusCode) {
     let url = format!(
         "/auth/confirmmail?username={}",
         urlencoding::encode(&username)
     );
 
     tokio::spawn(send_confirm_mail(mm, username, ip_addr, user_agent));
-    (HxRedirect(url), StatusCode::NO_CONTENT).into_response()
+    (HxRedirect(url), StatusCode::NO_CONTENT)
 }
 
 #[derive(Deserialize)]

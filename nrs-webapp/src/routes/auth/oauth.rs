@@ -282,6 +282,10 @@ async fn register_handler(
         )
             .into_response())
     } else {
-        Ok(redirect_to_confirm_mail_page(mm, username, ip_addr, user_agent).into_response())
+        Ok((
+            remove_temp_tokens_cookie(secret_jar),
+            redirect_to_confirm_mail_page(mm, username, ip_addr, user_agent),
+        )
+            .into_response())
     }
 }

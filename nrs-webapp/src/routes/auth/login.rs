@@ -139,8 +139,6 @@ async fn submit(
         )
             .into_response())
     } else {
-        Ok(redirect_to_confirm_mail_page(
-            mm, username, ip_addr, user_agent,
-        ))
+        Ok(redirect_to_confirm_mail_page(mm, username, ip_addr, user_agent).into_response())
     }
 }
