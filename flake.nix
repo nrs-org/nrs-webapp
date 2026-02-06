@@ -60,6 +60,7 @@
                 bacon
                 lld
                 wasm-bindgen-cli
+                just
 
                 # nix stuff
                 nixfmt
