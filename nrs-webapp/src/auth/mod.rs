@@ -138,7 +138,7 @@ pub struct TempTokensCookie {
 }
 
 pub fn add_temp_tokens_cookie(jar: PrivateCookieJar, tokens: TempTokensCookie) -> PrivateCookieJar {
-    let tokens_json = serde_json::to_string(&tokens).unwrap_or_default();
+    let tokens_json = serde_json::to_string(&tokens).expect("should not fail on serialize");
     jar.add(
         Cookie::build((AUTH_TEMP_TOKENS_COOKIE_NAME, tokens_json))
             .http_only(true)

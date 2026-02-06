@@ -8,7 +8,6 @@ pub enum RegisterScreen {
     OAuth {
         username: Option<String>,
         email: Option<String>,
-        email_verified: bool,
     },
 }
 
@@ -32,9 +31,7 @@ pub fn register(screen: RegisterScreen) -> impl Renderable {
     };
     let (username, email, email_readonly) = match screen {
         RegisterScreen::Regular => Default::default(),
-        RegisterScreen::OAuth {
-            username, email, ..
-        } => {
+        RegisterScreen::OAuth { username, email } => {
             let username = username.unwrap_or_default();
             let (email, email_readonly) = match email {
                 Some(email) => (email, true),

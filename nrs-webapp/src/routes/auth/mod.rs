@@ -33,7 +33,12 @@ pub fn router() -> Router<ModelManager> {
 pub(crate) fn mask_email_for_log(email: &str) -> String {
     if let Some((local, domain)) = email.split_once('@') {
         let first = local.chars().next().unwrap_or('*');
-        format!("{}***@{}", first, domain)
+        let domain_masked = if let Some((_, tld)) = domain.rsplit_once('.') {
+            format!("***. {}", tld)
+        } else {
+            "***".to_string()
+        };
+        format!("{}***@{}", first, domain_masked)
     } else {
         "<redacted-email>".to_string()
     }

@@ -189,6 +189,7 @@ impl<'t> PrimaryStore for Transaction<'t, SqlxDatabase> {
 }
 
 impl FromRef<ModelManager> for Key {
+    // this is just to make SignedCookieJar and PrivateCookieJar work, nothing to see here
     fn from_ref(_: &ModelManager) -> Self {
         Key::from(&AppConfig::get().SERVICE_COOKIE_KEY)
     }

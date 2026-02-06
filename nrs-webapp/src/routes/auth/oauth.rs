@@ -1,3 +1,4 @@
+use aes_gcm::KeyInit;
 use always_send::FutureExt;
 use anyhow::Context;
 use axum::{
@@ -29,9 +30,12 @@ use crate::{
         TempTokensCookie, add_auth_cookie, add_auth_flow_state_cookie, add_temp_tokens_cookie,
         external::{AuthFlowState, AuthorizeUrl, UserIdentity},
         get_auth_flow_state_cookie, get_temp_tokens_cookie, remove_auth_flow_state_cookie,
+        remove_temp_tokens_cookie,
     },
     config::AppConfig,
-    crypt::{password_hash::PasswordHasher, session_token::SessionToken},
+    crypt::{
+        password_hash::PasswordHasher, session_token::SessionToken, symmetric::SymmetricCipher,
+    },
     extract::with_rejection::WRVForm,
     model::{
         entity::DbBmc,
@@ -47,6 +51,16 @@ pub fn router() -> Router<ModelManager> {
         .route("/authorize/{provider}", get(authorize_handler))
         .route("/callback/{provider}", get(callback_handler))
         .route("/register", post(register_handler))
+}
+
+fn build_redirect_uri(provider_name: &str) -> Result<url::Url> {
+    AppConfig::get()
+        .SERVICE_BASE_URL
+        .clone()
+        .join("/auth/oauth/callback/")
+        .and_then(|u| u.join(provider_name))
+        .context("invalid redirect url")
+        .map_err(Error::Unexpected)
 }
 
 async fn authorize_handler(
@@ -65,13 +79,7 @@ async fn authorize_handler(
         .get(&provider)
         .ok_or_else(|| Error::Auth(auth::Error::ProviderNotFound(provider)))?;
 
-    let redirect_uri = AppConfig::get()
-        .SERVICE_BASE_URL
-        .clone()
-        .join("/auth/oauth/callback/")
-        .and_then(|u| u.join(provider.name()))
-        .context("invalid url")
-        .map_err(Error::Unexpected)?;
+    let redirect_uri = build_redirect_uri(provider.name())?;
 
     tracing::debug!(
         "{:<12} -- Redirecting to OAuth2 provider {} authorize URL (redirect_uri={})",
@@ -125,13 +133,7 @@ async fn callback_handler(
         .get(&provider_name)
         .ok_or_else(|| Error::Auth(auth::Error::ProviderNotFound(provider_name.clone())))?;
 
-    let redirect_uri = AppConfig::get()
-        .SERVICE_BASE_URL
-        .clone()
-        .join("/auth/oauth/callback/")
-        .and_then(|u| u.join(provider.name()))
-        .context("invalid url")
-        .map_err(Error::Unexpected)?;
+    let redirect_uri = build_redirect_uri(provider.name())?;
 
     let mut tokens = provider
         .exchange_code(&mm, code, redirect_uri.clone(), pkce_verifier)
@@ -145,29 +147,35 @@ async fn callback_handler(
         ..
     } = match tokens.id_token.take() {
         Some(id_token) => {
-            let identity = provider
-                .fetch_identity(&mm, id_token, nonce, redirect_uri)
-                .await?;
-
             // Debug-only, PII
-            tracing::info!(
-                "Fetched user identity from provider {}: {:?}",
-                provider.name(),
-                identity
-            );
+            // tracing::info!(
+            //     "Fetched user identity from provider {}: {:?}",
+            //     provider.name(),
+            //     identity
+            // );
 
-            identity
+            provider
+                .fetch_identity(&mm, id_token, nonce, redirect_uri)
+                .await?
         }
         _ => UserIdentity::default(),
     };
+
+    let cipher = SymmetricCipher::get_from_config();
+    let encrypted_access_token = cipher.encrypt(tokens.access_token.secret().as_bytes())?;
+    let encrypted_refresh_token = tokens
+        .refresh_token
+        .as_ref()
+        .map(|refresh_token| cipher.encrypt(refresh_token.secret().as_bytes()))
+        .transpose()?;
 
     let user_id = OAuthLinkBmc::update_link(
         &mut mm,
         &provider_name,
         &id,
         OAuthLinkForUpdate {
-            access_token: tokens.access_token.secret().clone(),
-            refresh_token: tokens.refresh_token.as_ref().map(|s| s.secret().clone()),
+            access_token: encrypted_access_token,
+            refresh_token: encrypted_refresh_token,
             access_token_expires_at: tokens.expires_at,
         },
     )
@@ -175,7 +183,10 @@ async fn callback_handler(
 
     if let Some(user_id) = user_id {
         Ok((
-            add_auth_cookie(jar, SessionToken::new(user_id)),
+            add_auth_cookie(
+                remove_auth_flow_state_cookie(jar),
+                SessionToken::new(user_id),
+            ),
             Redirect::to("/"),
         )
             .into_response())
@@ -195,11 +206,7 @@ async fn callback_handler(
             maybe_document(
                 HxRequest(false),
                 DocumentProps::default(),
-                register(RegisterScreen::OAuth {
-                    username,
-                    email,
-                    email_verified,
-                }),
+                register(RegisterScreen::OAuth { username, email }),
             ),
         )
             .into_response())
@@ -256,14 +263,22 @@ async fn register_handler(
             .await?;
     }
 
+    let cipher = SymmetricCipher::get_from_config();
+    let encrypted_access_token = cipher.encrypt(tokens.access_token.secret().as_bytes())?;
+    let encrypted_refresh_token = tokens
+        .refresh_token
+        .as_ref()
+        .map(|refresh_token| cipher.encrypt(refresh_token.secret().as_bytes()))
+        .transpose()?;
+
     OAuthLinkBmc::create(
         &mut tx,
         OAuthLinkForCreate {
             user_id,
             provider: provider_name,
             provider_user_id: Some(subject),
-            access_token: tokens.access_token.into_secret(),
-            refresh_token: tokens.refresh_token.map(|s| s.into_secret()),
+            access_token: encrypted_access_token,
+            refresh_token: encrypted_refresh_token,
             access_token_expires_at: tokens.expires_at,
         },
     )
@@ -276,6 +291,7 @@ async fn register_handler(
         Ok((
             HxRedirect("/".into()),
             add_auth_cookie(jar, SessionToken::new(user_id)),
+            remove_temp_tokens_cookie(secret_jar),
         )
             .into_response())
     } else {

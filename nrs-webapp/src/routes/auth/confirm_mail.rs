@@ -323,9 +323,9 @@ async fn send_confirm_email_inner(
         .always_send()
         .await?;
 
-        tx.commit().await?;
-
         send_email_verification_mail(&email, &username, &confirm_token).await?;
+
+        tx.commit().await?;
     } else {
         tracing::debug!(
             "{:<12} -- send_confirm_email -- No unverified user found with username: {}",

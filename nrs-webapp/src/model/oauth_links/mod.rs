@@ -17,15 +17,15 @@ pub struct OAuthLinkForCreate {
     pub user_id: Uuid,
     pub provider: String,
     pub provider_user_id: Option<String>,
-    pub access_token: String,
-    pub refresh_token: Option<String>,
+    pub access_token: Vec<u8>,
+    pub refresh_token: Option<Vec<u8>>,
     pub access_token_expires_at: Option<OffsetDateTime>,
 }
 
 #[derive(Fields)]
 pub struct OAuthLinkForUpdate {
-    pub access_token: String,
-    pub refresh_token: Option<String>,
+    pub access_token: Vec<u8>,
+    pub refresh_token: Option<Vec<u8>>,
     pub access_token_expires_at: Option<OffsetDateTime>,
 }
 
@@ -40,7 +40,7 @@ impl OAuthLinkBmc {
             .query_as_with(
                 Query::update()
                     .table(Self::TABLE_NAME)
-                    .bind(update_req.all_fields()?)
+                    .bind(update_req.not_none_fields()?)
                     .and_where(Expr::col("provider_user_id").eq(provider_user_id))
                     .and_where(Expr::col("provider").eq(provider_name))
                     .and_where(Expr::col("revoked_at").is_null())

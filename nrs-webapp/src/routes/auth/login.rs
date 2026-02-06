@@ -19,7 +19,7 @@ use crate::{
     Error, Result,
     auth::{self, add_auth_cookie, error::LoginError},
     crypt::{password_hash::PasswordHasher, session_token::SessionToken},
-    extract::{doc_props::DocProps, with_rejection::WRForm},
+    extract::{doc_props::DocProps, with_rejection::WRVForm},
     model::{ModelManager, user::UserBmc},
     routes::auth::{confirm_mail::redirect_to_confirm_mail_page, mask_username_for_log},
 };
@@ -106,7 +106,7 @@ async fn submit(
     jar: SignedCookieJar,
     ClientIp(ip_addr): ClientIp,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
-    WRForm(LoginPayload { username, password }): WRForm<LoginPayload>,
+    WRVForm(LoginPayload { username, password }): WRVForm<LoginPayload>,
 ) -> Result<Response> {
     tracing::debug!(
         "{:<12} -- POST auth::login -- username: {}",

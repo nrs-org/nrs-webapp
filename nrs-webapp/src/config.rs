@@ -23,6 +23,7 @@ pub struct AppConfig {
     pub SERVICE_CACHE_DIR: Option<String>,
     pub IP_SOURCE: ClientIpSource,
 
+    pub SERVICE_ENCRYPTION_KEY: Vec<u8>,
     pub SERVICE_PASSWORD_PEPPER: Vec<u8>,
     pub SERVICE_COOKIE_KEY: Vec<u8>,
     pub SERVICE_SESSION_EXPIRY_DURATION: Duration,
@@ -151,6 +152,8 @@ impl AppConfig {
             SERVICE_DB_URL: Self::get_env("SERVICE_DB_URL")?,
             SERVICE_CACHE_DIR: Self::get_env("SERVICE_CACHE_DIR").ok(),
             IP_SOURCE: Self::get_env_parse::<ClientIpSource>("IP_SOURCE")?,
+
+            SERVICE_ENCRYPTION_KEY: Self::get_env_b64u("SERVICE_ENCRYPTION_KEY")?,
             SERVICE_PASSWORD_PEPPER: Self::get_env_b64u("SERVICE_PASSWORD_PEPPER")?,
             SERVICE_COOKIE_KEY: Self::get_env_b64u("SERVICE_COOKIE_KEY")?,
             SERVICE_SESSION_EXPIRY_DURATION: Self::get_env_dur_secs("SERVICE_SESSION_EXPIRY_SECS")?,
