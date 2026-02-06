@@ -186,9 +186,7 @@ impl AuthProvider for GoogleAuthProvider {
         let provider_metadata = self.discover_provider_metadata(mm).await?;
         let client = self.create_client(provider_metadata, redirect_uri.clone())?;
 
-        let mut req = client
-            .exchange_code(AuthorizationCode::new(code.to_string()))?
-            .set_redirect_uri(Cow::Owned(RedirectUrl::from_url(redirect_uri)));
+        let mut req = client.exchange_code(AuthorizationCode::new(code.to_string()))?;
 
         if let Some(pkce_verifier) = pkce_verifier {
             req = req.set_pkce_verifier(pkce_verifier);
@@ -229,10 +227,7 @@ impl AuthProvider for GoogleAuthProvider {
             .map_err(|_| auth::Error::InvalidIdTokenType)?;
 
         let verifier = client.id_token_verifier();
-        let claims = id_token.claims(
-            &verifier,
-            &nonce.expect("nonce is required for Google ID tokens"),
-        )?;
+        let claims = id_token.claims(&verifier, &nonce.ok_or(auth::Error::NonceMissing)?)?;
 
         Ok(UserIdentity {
             id: claims.subject().to_string(),

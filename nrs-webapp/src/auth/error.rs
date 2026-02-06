@@ -47,6 +47,9 @@ pub enum Error {
 
     #[error("Mismatched email")]
     EmailMismatch,
+
+    #[error("Nonce missing")]
+    NonceMissing,
 }
 
 #[derive(Debug, Error)]
