@@ -31,8 +31,6 @@ pub struct TokenResponse {
     pub access_token: AccessToken,
     pub refresh_token: Option<RefreshToken>,
     pub expires_at: Option<OffsetDateTime>,
-    #[serde(skip)]
-    pub id_token: Option<IdToken>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -56,7 +54,7 @@ pub trait AuthProvider: Send + Sync {
         code: String,
         redirect_uri: Url,
         pkce_verifier: Option<PkceCodeVerifier>,
-    ) -> Result<TokenResponse>;
+    ) -> Result<(TokenResponse, IdToken)>;
 
     async fn fetch_identity(
         &self,

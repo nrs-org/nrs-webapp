@@ -182,7 +182,7 @@ impl AuthProvider for GoogleAuthProvider {
         code: String,
         redirect_uri: Url,
         pkce_verifier: Option<PkceCodeVerifier>,
-    ) -> Result<TokenResponse> {
+    ) -> Result<(TokenResponse, IdToken)> {
         let provider_metadata = self.discover_provider_metadata(mm).await?;
         let client = self.create_client(provider_metadata, redirect_uri.clone())?;
 
@@ -196,19 +196,21 @@ impl AuthProvider for GoogleAuthProvider {
 
         let token_response = req.request_async(mm.http_client_wrapper()).await?;
 
+        let id_token = token_response
+            .id_token()
+            .cloned()
+            .map(|id_token| IdToken(Box::new(id_token)))
+            .expect("Google always returns ID tokens");
+
         let tokens = TokenResponse {
             access_token: token_response.access_token().clone(),
             refresh_token: token_response.refresh_token().cloned(),
-            id_token: token_response
-                .id_token()
-                .cloned()
-                .map(|id_token| IdToken(Box::new(id_token))),
             expires_at: token_response
                 .expires_in()
                 .map(|dur| OffsetDateTime::now_utc() + dur),
         };
 
-        Ok(tokens)
+        Ok((tokens, id_token))
     }
 
     async fn fetch_identity(

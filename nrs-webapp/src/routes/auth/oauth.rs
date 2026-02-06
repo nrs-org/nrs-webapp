@@ -1,4 +1,3 @@
-use aes_gcm::KeyInit;
 use always_send::FutureExt;
 use anyhow::Context;
 use axum::{
@@ -135,7 +134,7 @@ async fn callback_handler(
 
     let redirect_uri = build_redirect_uri(provider.name())?;
 
-    let mut tokens = provider
+    let (tokens, id_token) = provider
         .exchange_code(&mm, code, redirect_uri.clone(), pkce_verifier)
         .await?;
 
@@ -145,21 +144,9 @@ async fn callback_handler(
         email,
         email_verified,
         ..
-    } = match tokens.id_token.take() {
-        Some(id_token) => {
-            // Debug-only, PII
-            // tracing::info!(
-            //     "Fetched user identity from provider {}: {:?}",
-            //     provider.name(),
-            //     identity
-            // );
-
-            provider
-                .fetch_identity(&mm, id_token, nonce, redirect_uri)
-                .await?
-        }
-        _ => UserIdentity::default(),
-    };
+    } = provider
+        .fetch_identity(&mm, id_token, nonce, redirect_uri)
+        .await?;
 
     let cipher = SymmetricCipher::get_from_config();
     let encrypted_access_token = cipher.encrypt(tokens.access_token.secret().as_bytes())?;
