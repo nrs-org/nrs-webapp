@@ -167,7 +167,9 @@ impl AppConfig {
             RESEND_API_KEY: Self::get_env("RESEND_API_KEY").ok(),
             SERVICE_TOKEN_SECRET: Self::get_env_b64u("SERVICE_TOKEN_SECRET")?,
             EMAIL_ACCOUNT_SUPPORT: Self::get_env("EMAIL_ACCOUNT_SUPPORT").ok(),
-            GOOGLE_OAUTH_CREDENTIALS: Self::load_google_oauth_config()?,
+            GOOGLE_OAUTH_CREDENTIALS: Self::load_google_oauth_config()
+                .inspect_err(|err| tracing::warn!("GOOGLE_OAUTH_CREDENTIALS not loaded: {err:?}"))
+                .ok(),
         })
     }
 
@@ -256,25 +258,20 @@ impl AppConfig {
         Self::duration_to_time_duration(self.SERVICE_PASSWORD_RESET_EXPIRY_DURATION)
     }
 
-    fn load_google_oauth_config() -> anyhow::Result<Option<GoogleOAuthConfig>> {
+    fn load_google_oauth_config() -> anyhow::Result<GoogleOAuthConfig> {
         #[derive(Deserialize)]
         struct GoogleOAuthConfigWrapped {
             web: GoogleOAuthConfig,
         }
 
-        let path = Self::get_env("GOOGLE_OAUTH_CREDENTIALS_PATH").ok();
+        let path = Self::get_env("GOOGLE_OAUTH_CREDENTIALS_PATH")?;
+        tracing::info!("Loading Google OAuth credentials from {}", path);
+        let credentials =
+            serde_json::from_reader::<_, GoogleOAuthConfigWrapped>(File::open(&path)?)
+                .with_context(|| {
+                    format!("Failed to read Google OAuth credentials from {}", path)
+                })?;
 
-        if let Some(path) = path {
-            tracing::info!("Loading Google OAuth credentials from {}", path);
-            let credentials =
-                serde_json::from_reader::<_, GoogleOAuthConfigWrapped>(File::open(&path)?)
-                    .with_context(|| {
-                        format!("Failed to read Google OAuth credentials from {}", path)
-                    })?;
-
-            return Ok(Some(credentials.web));
-        }
-
-        Ok(None)
+        Ok(credentials.web)
     }
 }
