@@ -13,9 +13,9 @@ pub struct SymmetricCipher {
 }
 
 impl SymmetricCipher {
-    pub fn new(key: &[u8]) -> core::result::Result<Self, anyhow::Error> {
+    pub fn new(key: &[u8]) -> Result<Self> {
         Ok(Self {
-            cipher: Aes256Gcm::new_from_slice(key)?,
+            cipher: Aes256Gcm::new_from_slice(key).map_err(|_| Error::InvalidKeyLength)?,
         })
     }
 

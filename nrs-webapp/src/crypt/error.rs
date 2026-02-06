@@ -18,6 +18,9 @@ pub enum Error {
     #[error("Invalid token length")]
     InvalidTokenLength,
 
+    #[error("Invalid key length")]
+    InvalidKeyLength,
+
     #[error("Token has expired")]
     TokenExpired,
 
