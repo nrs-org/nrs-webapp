@@ -7,12 +7,6 @@ pub enum Error {
     #[error("Login error: {0}")]
     Login(LoginError),
 
-    #[error("Invalid user UUID: {0}")]
-    UuidParseError(uuid::Error),
-
-    #[error("Invalid URL: {0}")]
-    UrlParseError(#[from] url::ParseError),
-
     #[error("Error from external authentication provider: {0}")]
     ExternalAuth(#[from] external::Error),
 }

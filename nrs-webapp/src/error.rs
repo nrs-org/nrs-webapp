@@ -80,18 +80,44 @@ impl Error {
     pub fn get_client_error_parts(&self) -> (StatusCode, Cow<'static, str>) {
         tracing::debug!("{:<12} -- Get client error parts for {self:?}", "ERR_PARTS");
         match self {
-            Error::PageNotFound { .. } => (
-                StatusCode::NOT_FOUND,
-                "The page you are looking for does not exist.".into(),
-            ),
+            Error::PageNotFound { .. }
+            | Error::Auth(auth::Error::ExternalAuth(auth::external::Error::ProviderNotFound(_))) => {
+                (
+                    StatusCode::NOT_FOUND,
+                    "The page you are looking for does not exist.".into(),
+                )
+            }
             Error::MethodNotAllowed { .. } => (
                 StatusCode::METHOD_NOT_ALLOWED,
                 "The page you are looking for does not exist.".into(),
             ),
             Error::Auth(auth::Error::Login(auth::error::LoginError::InvalidCredentials)) => (
-                StatusCode::BAD_REQUEST,
+                StatusCode::UNAUTHORIZED,
                 "Invalid credentials provided.".into(),
             ),
+
+            Error::Auth(auth::Error::ExternalAuth(
+                auth::external::Error::OidcDiscovery(_)
+                | auth::external::Error::TokenExchange(_)
+                | auth::external::Error::Reqwest(_),
+            )) => (
+                StatusCode::BAD_GATEWAY,
+                "Failed to communicate with external authentication provider.".into(),
+            ),
+
+            Error::Auth(auth::Error::ExternalAuth(
+                auth::external::Error::AuthFlowStateCookieNotFound
+                | auth::external::Error::TempTokenCookieNotFound
+                | auth::external::Error::CsrfStateMismatch
+                | auth::external::Error::EmailMismatch
+                | auth::external::Error::NonceMissing
+                | auth::external::Error::InvalidIdTokenType
+                | auth::external::Error::InvalidIdTokenClaims(_),
+            )) => (
+                StatusCode::BAD_REQUEST,
+                "Invalid authentication flow. Please try again.".into(),
+            ),
+
             Error::Model(model::Error::EmailOrUsernameAlreadyExists) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 "A user with the given email or username already exists.".into(),
