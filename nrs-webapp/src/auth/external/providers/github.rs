@@ -116,13 +116,13 @@ impl IdentityFetcher for GithubCoreClientWrapper {
                     *idx,        // then first in list
                 )
             })
-            .map(|(_, e)| e.email);
+            .map(|(_, e)| (e.email, e.verified));
 
         Ok(UserIdentity {
             id: user.id.to_string(),
             username: Some(user.login),
-            email,
-            email_verified: true,
+            email_verified: email.as_ref().map(|(_, v)| *v).unwrap_or_default(),
+            email: email.map(|(e, _)| e),
             profile_picture: Some(Url::parse(&user.avatar_url)?),
         })
     }
