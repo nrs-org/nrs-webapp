@@ -67,7 +67,7 @@ fn build_redirect_uri(provider_name: &str) -> Result<url::Url> {
 
 async fn authorize_handler(
     Path(provider): Path<String>,
-    jar: SignedCookieJar,
+    secret_jar: PrivateCookieJar,
     State(mm): State<ModelManager>,
 ) -> Result<impl IntoResponse> {
     tracing::debug!(
@@ -93,7 +93,7 @@ async fn authorize_handler(
     let AuthorizeUrl { url, state } = provider.authorize_url(&mm, redirect_uri).await?;
 
     Ok((
-        add_auth_flow_state_cookie(jar, &state)?,
+        add_auth_flow_state_cookie(secret_jar, &state)?,
         Redirect::to(url.as_ref()),
     ))
 }
@@ -121,7 +121,8 @@ async fn callback_handler(
         csrf_state,
         nonce,
         pkce_verifier,
-    } = get_auth_flow_state_cookie(&jar).ok_or_else(|| auth::Error::AuthFlowStateCookieNotFound)?;
+    } = get_auth_flow_state_cookie(&secret_jar)
+        .ok_or_else(|| auth::Error::AuthFlowStateCookieNotFound)?;
 
     if csrf_state
         .map(|s| s != CsrfToken::new(state))
@@ -173,18 +174,15 @@ async fn callback_handler(
 
     if let Some(user_id) = user_id {
         Ok((
-            add_auth_cookie(
-                remove_auth_flow_state_cookie(jar),
-                SessionToken::new(user_id),
-            ),
+            remove_auth_flow_state_cookie(secret_jar),
+            add_auth_cookie(jar, SessionToken::new(user_id)),
             Redirect::to("/"),
         )
             .into_response())
     } else {
         Ok((
-            remove_auth_flow_state_cookie(jar),
             add_temp_tokens_cookie(
-                secret_jar,
+                remove_auth_flow_state_cookie(secret_jar),
                 TempTokensCookie {
                     tokens,
                     email: email.clone(),

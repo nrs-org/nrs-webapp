@@ -81,11 +81,11 @@ pub fn remove_auth_cookie(jar: SignedCookieJar) -> SignedCookieJar {
 /// # Examples
 ///
 /// ```no_run
-/// use axum_extra::extract::SignedCookieJar;
+/// use axum_extra::extract::PrivateCookieJar;
 /// use cookie::Key;
 /// use nrs_webapp::auth::get_auth_cookie;
 ///
-/// let jar = SignedCookieJar::new(Key::generate());
+/// let jar = PrivateCookieJar::new(Key::generate());
 /// // assume a cookie named "nrs_auth_token" was previously added to `jar`
 /// let value = get_auth_cookie(&jar);
 /// assert!(value.is_none() || value.is_some());
@@ -95,9 +95,9 @@ pub fn get_auth_cookie(jar: &SignedCookieJar) -> Option<String> {
 }
 
 pub fn add_auth_flow_state_cookie(
-    jar: SignedCookieJar,
+    jar: PrivateCookieJar,
     auth_flow_state: &AuthFlowState,
-) -> Result<SignedCookieJar> {
+) -> Result<PrivateCookieJar> {
     let state_json = serde_json::to_string(auth_flow_state)?;
     Ok(jar.add(
         Cookie::build((AUTH_FLOW_STATE_COOKIE_NAME, state_json))
@@ -112,11 +112,11 @@ pub fn add_auth_flow_state_cookie(
     ))
 }
 
-pub fn remove_auth_flow_state_cookie(jar: SignedCookieJar) -> SignedCookieJar {
+pub fn remove_auth_flow_state_cookie(jar: PrivateCookieJar) -> PrivateCookieJar {
     jar.remove(Cookie::build(AUTH_FLOW_STATE_COOKIE_NAME).path("/auth/oauth"))
 }
 
-pub fn get_auth_flow_state_cookie(jar: &SignedCookieJar) -> Option<AuthFlowState> {
+pub fn get_auth_flow_state_cookie(jar: &PrivateCookieJar) -> Option<AuthFlowState> {
     if let Some(cookie) = jar.get(AUTH_FLOW_STATE_COOKIE_NAME) {
         match serde_json::from_str(cookie.value()) {
             Ok(state) => return Some(state),
