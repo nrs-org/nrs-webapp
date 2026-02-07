@@ -11,4 +11,5 @@ hypertext = { version = "0.12.1", features = ["alpine", "axum", "htmx"] }
 nrs-webapp-core = { version = "0.1.0", path = "../nrs-webapp-core" }
 serde = "1.0.228"
 sqlbindable = { version = "0.1.0", path = "../sqlbindable" }
-sqlx = "0.8.6"
+sqlx = { version = "0.8.6", default-features = false }
+strum = { version = "0.27.2", features = ["derive"] }

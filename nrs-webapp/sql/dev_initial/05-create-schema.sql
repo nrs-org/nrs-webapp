@@ -18,7 +18,7 @@ CREATE TABLE entry (
     id VARCHAR(50) NOT NULL PRIMARY KEY,
     title VARCHAR(512) NOT NULL,
     entry_type ENTRYTYPE NOT NULL,
-    added_by TEXT REFERENCES app_user(id),
+    added_by UUID REFERENCES app_user(id),
     -- TODO: this is temporary only
     overall_score DOUBLE PRECISION DEFAULT 0,
     entry_info JSONB NOT NULL DEFAULT '{}'::JSONB

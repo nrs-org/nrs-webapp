@@ -1,9 +1,12 @@
 use std::fmt::{Display, Formatter};
 
+use uuid::Uuid;
+
 #[derive(Debug, Clone)]
 pub enum EntityId {
     Int(i64),
     String(String),
+    Uuid(Uuid),
 }
 
 impl From<i64> for EntityId {
@@ -24,11 +27,18 @@ impl From<&str> for EntityId {
     }
 }
 
+impl From<Uuid> for EntityId {
+    fn from(id: Uuid) -> Self {
+        EntityId::Uuid(id)
+    }
+}
+
 impl Display for EntityId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             EntityId::Int(id) => write!(f, "{}", id),
             EntityId::String(id) => write!(f, "{}", id),
+            EntityId::Uuid(id) => write!(f, "{}", id),
         }
     }
 }

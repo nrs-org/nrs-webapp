@@ -1,9 +1,8 @@
 use sea_query::{Expr, ExprTrait, Order, Query, ReturningClause, SimpleExpr, Value};
-use sqlbindable::{BindContext, FieldVec, HasFields, TryIntoExpr};
+use sqlbindable::{BindContext, HasFields};
 
 use crate::model::{
-    Error, ModelManager, Result, SqlxDatabase, SqlxRow, entity::id::EntityId,
-    store::primary_store::PrimaryStore,
+    Error, Result, SqlxDatabase, SqlxRow, entity::id::EntityId, store::primary_store::PrimaryStore,
 };
 
 pub mod id;
@@ -16,9 +15,19 @@ pub struct ListPayload {
 }
 
 #[allow(async_fn_in_trait)]
-pub trait DbBmc {
+pub trait DbBmc: Send {
     const TABLE_NAME: &'static str;
 
+    /// Constructs an `Error::EntityNotFound` for this trait's `TABLE_NAME` using the given id.
+    ///
+    /// The provided `id` is converted into an `EntityId` and embedded in the generated error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Given a type `T` implementing `DbBmc` with TABLE_NAME = "users",
+    /// // calling `T::not_found_error(42)` produces an EntityNotFound error for id 42.
+    /// ```
     fn not_found_error<Id: Into<EntityId>>(id: Id) -> Error {
         Error::EntityNotFound {
             name: Self::TABLE_NAME,
@@ -26,7 +35,19 @@ pub trait DbBmc {
         }
     }
 
-    async fn create(ps: &mut impl PrimaryStore, create_req: impl HasFields) -> Result<()> {
+    /// Inserts a new row into the implementing table using only the fields present in `create_req`.
+    ///
+    /// Returns `Ok(())` on success; any underlying primary store errors are propagated.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # async fn example(ps: &mut impl PrimaryStore, req: impl HasFields + Send) -> Result<()> {
+    /// MyEntity::create(ps, req).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    async fn create(ps: &mut impl PrimaryStore, create_req: impl HasFields + Send) -> Result<()> {
         ps.query_with(
             Query::insert()
                 .into_table(Self::TABLE_NAME)
@@ -123,11 +144,11 @@ pub trait DbBmc {
 #[allow(async_fn_in_trait)]
 pub trait DbBmcWithPkey: DbBmc {
     const PRIMARY_KEY: &'static str;
-    type PkeyType: Into<EntityId>;
+    type PkeyType: Into<EntityId> + Clone;
 
-    fn cond_pkey(pkey: &Self::PkeyType) -> SimpleExpr
+    fn cond_pkey(pkey: Self::PkeyType) -> SimpleExpr
     where
-        Value: for<'a> From<&'a Self::PkeyType>,
+        Value: From<Self::PkeyType>,
     {
         Expr::col(Self::PRIMARY_KEY).eq(pkey)
     }
@@ -159,9 +180,9 @@ pub trait DbBmcWithPkey: DbBmc {
     async fn get<E>(mm: &mut impl PrimaryStore, id: Self::PkeyType) -> Result<E>
     where
         E: for<'r> sqlx::FromRow<'r, SqlxRow> + Send + Unpin + HasFields,
-        Value: for<'e> From<&'e Self::PkeyType>,
+        Value: From<Self::PkeyType>,
     {
-        Self::get_optional_by_expr::<E>(mm, Self::cond_pkey(&id))
+        Self::get_optional_by_expr::<E>(mm, Self::cond_pkey(id.clone()))
             .await?
             .ok_or_else(|| Self::not_found_error(id))
     }
@@ -172,9 +193,9 @@ pub trait DbBmcWithPkey: DbBmc {
         id: Self::PkeyType,
     ) -> Result<()>
     where
-        Value: for<'e> From<&'e Self::PkeyType>,
+        Value: From<Self::PkeyType>,
     {
-        let rows_affected = Self::update_cond(mm, update_req, Self::cond_pkey(&id)).await?;
+        let rows_affected = Self::update_cond(mm, update_req, Self::cond_pkey(id.clone())).await?;
         if rows_affected == 0 {
             return Err(Self::not_found_error(id));
         }
@@ -183,9 +204,9 @@ pub trait DbBmcWithPkey: DbBmc {
 
     async fn delete(mm: &mut impl PrimaryStore, id: Self::PkeyType) -> Result<()>
     where
-        Value: for<'e> From<&'e Self::PkeyType>,
+        Value: From<Self::PkeyType>,
     {
-        let rows_affected = Self::delete_cond(mm, Self::cond_pkey(&id)).await?;
+        let rows_affected = Self::delete_cond(mm, Self::cond_pkey(id.clone())).await?;
         if rows_affected == 0 {
             return Err(Self::not_found_error(id));
         }

@@ -1,0 +1,30 @@
+use hypertext::prelude::*;
+
+use super::Form;
+
+/// Render a form prompting the user to confirm their email and allowing resending the confirmation message.
+///
+/// The form has id `"confirmmail-form"`, posts to `"/auth/confirmmail/resend"`, includes a hidden `username` input with the provided value, a submit button labeled "Resend confirmation email", and a short note about possible delivery delays.
+///
+/// # Examples
+///
+/// ```
+/// use nrs_webapp_frontend::views::pages::auth::confirm_email::confirm_mail;
+/// let component = confirm_mail("alicesoty2025".into());
+/// // `component` can be rendered by the application's rendering system
+/// ```
+pub fn confirm_mail(username: String) -> impl Renderable {
+    rsx! {
+        <Form form_id="confirmmail-form" title="Confirm your email" hx_post="/auth/confirmmail/resend">
+            <p>Please verify your email address to activate your account</p>
+
+            <p>"A confirmation email has been sent to your email address. Click the link in the email to confirm your email."</p>
+
+            <input name="username" type="hidden" value=(username) />
+
+            <button type="submit" class="btn btn-neutral mt-4">Resend confirmation email</button>
+
+            <p class="text-xs opacity-80">"Email delivery may take a few minutes. If you do not see the email, please check your spam or junk folder."</p>
+        </Form>
+    }
+}

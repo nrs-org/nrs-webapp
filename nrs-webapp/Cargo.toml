@@ -4,19 +4,82 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+aes-gcm = "0.10.3"
+always_send = "0.1.1"
 anyhow = "1.0.100"
+argon2 = { version = "0.5.3", features = ["std"] }
+async-trait = "0.1.89"
 axum = { version = "0.8.7", features = ["macros"] }
+axum-client-ip = "1.1.3"
+axum-extra = { version = "0.12.3", default-features = false, features = [
+  "cookie",
+  "cookie-private",
+  "cookie-signed",
+  "typed-header",
+  "with-rejection",
+] }
 axum-htmx = "0.8.1"
 base64 = "0.22.1"
+futures = "0.3.31"
+governor = "0.10.4"
+hmac = "0.12.1"
+http-cache-reqwest = { version = "0.16.0", default-features = false, features = [
+  "manager-cacache",
+] }
+hypertext = { version = "0.12.1", features = ["alpine", "axum", "htmx"] }
 include_dir = "0.7.4"
-nrs-webapp-core = { version = "0.1.0", path = "../nrs-webapp-core", features = ["sql"] }
+nonzero_ext = "0.3.0"
+nrs-webapp-core = { version = "0.1.0", path = "../nrs-webapp-core", features = [
+  "sql",
+] }
 nrs-webapp-frontend = { version = "0.1.0", path = "../nrs-webapp-frontend" }
-sea-query = { version = "1.0.0-rc.22", default-features = false, features = ["backend-postgres", "with-chrono", "with-json", "with-time"] }
-sea-query-sqlx = { version = "=0.8.0-rc.10", default-features = false, features = ["sqlx-postgres", "with-chrono", "with-json", "with-time"] }
+oauth2 = { version = "5.0.0", default-features = false, features = [
+  "pkce-plain",
+  "reqwest",
+  "rustls-tls",
+  "timing-resistant-secret-traits",
+] }
+openidconnect = "4.0.1"
+rand = "0.9.2"
+regex-macro = "0.3.0"
+reqwest = { version = "0.12", default-features = false, features = [
+  "http2",
+  "json",
+  "rustls-tls",
+] }
+reqwest-middleware = { version = "0.4", default-features = false }
+resend-rs = { version = "0.19.0", default-features = false, features = [
+  "rustls-tls",
+] }
+sea-query = { version = "1.0.0-rc.22", default-features = false, features = [
+  "backend-postgres",
+  "with-chrono",
+  "with-json",
+  "with-time",
+  "with-uuid",
+] }
+sea-query-sqlx = { version = "=0.8.0-rc.14", default-features = false, features = [
+  "sqlx-postgres",
+  "with-chrono",
+  "with-json",
+  "with-time",
+  "with-uuid",
+] }
 serde = "1.0.228"
 serde_json = "1.0.145"
-sqlbindable = { version = "0.1.0", path = "../sqlbindable", features = ["sqlx-json"] }
-sqlx = { version = "0.8.6", default-features = false, features = ["postgres", "runtime-tokio"] }
+serde_with = { version = "3.16.1", features = ["time_0_3"] }
+sha2 = "0.10.9"
+sqlbindable = { version = "0.1.0", path = "../sqlbindable", features = [
+  "sqlx-json",
+  "with-uuid",
+] }
+sqlx = { version = "0.8.6", default-features = false, features = [
+  "postgres",
+  "runtime-tokio",
+  "uuid",
+] }
+strum = { version = "0.27.2", features = ["derive"] }
+tempfile = "3.24.0"
 thiserror = "2.0.17"
 time = "0.3.44"
 tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread"] }
@@ -24,4 +87,7 @@ tokio-stream = "0.1.17"
 tower-http = { version = "0.6.8", features = ["fs"] }
 tracing = "0.1.43"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
-uuid = { version = "1.19.0", features = ["serde", "v4"] }
+url = { version = "2.5.8", default-features = false }
+urlencoding = "2.1.3"
+uuid = { version = "1.20.0", features = ["serde", "v4"] }
+validator = { version = "0.20.0", features = ["derive"] }

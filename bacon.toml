@@ -7,16 +7,24 @@ watch = ["nrs-webapp-frontend/"]
 
 [jobs.build-core-wasm]
 command = [
-	"cargo", "rustc", "--release", "--target", "wasm32-unknown-unknown",
-	"--package", "nrs-webapp-core", "--crate-type", "cdylib",
+  "cargo",
+  "rustc",
+  "--release",
+  "--target",
+  "wasm32-unknown-unknown",
+  "--package",
+  "nrs-webapp-core",
+  "--crate-type",
+  "cdylib",
 ]
 on_success = "job:wasm-bindgen-core"
 
 [jobs.wasm-bindgen-core]
 command = [
-	"wasm-bindgen",
-	"target/wasm32-unknown-unknown/release/nrs_webapp_core.wasm",
-	"--target", "web",
-	"--out-dir", "nrs-webapp-frontend/static/serve/generated/nrs-webapp-core",
+  "wasm-bindgen",
+  "target/wasm32-unknown-unknown/release/nrs_webapp_core.wasm",
+  "--target",
+  "web",
+  "--out-dir",
+  "nrs-webapp-frontend/static/serve/generated/nrs-webapp-core",
 ]
-
