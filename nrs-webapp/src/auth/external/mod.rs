@@ -22,7 +22,7 @@ mod providers;
 
 pub use error::{Error, Result};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct UserIdentity {
     pub id: String,
     pub username: Option<String>,
