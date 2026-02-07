@@ -145,7 +145,7 @@ async fn callback_handler(
         email_verified,
         ..
     } = provider
-        .fetch_identity(&mm, id_token, nonce, redirect_uri)
+        .fetch_identity(&mm, id_token, nonce, &tokens.access_token, redirect_uri)
         .await?;
 
     let cipher = SymmetricCipher::get_from_config();

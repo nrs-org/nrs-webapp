@@ -19,3 +19,4 @@ SERVICE_OAUTH_EXPIRY_SECS = "300"
 VGMDB_API_ENDPOINT = "http://localhost:2999"
 
 GOOGLE_OAUTH_CREDENTIALS_PATH = { value = "secrets/google_oauth_credentials.json", relative = true }
+GITHUB_OAUTH_CREDENTIALS_PATH = { value = "secrets/github_oauth_credentials.json", relative = true }

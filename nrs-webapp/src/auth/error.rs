@@ -12,8 +12,11 @@ pub enum Error {
     #[error("Invalid user UUID: {0}")]
     UuidParseError(uuid::Error),
 
+    #[error("Invalid URL: {0}")]
+    UrlParseError(#[from] url::ParseError),
+
     #[error("HTTP request error: {0}")]
-    Reqwest(#[from] reqwest::Error),
+    Reqwest(#[from] reqwest_middleware::Error),
 
     #[error("OAuth2/OIDC provider not found: {0}")]
     ProviderNotFound(String),
@@ -59,3 +62,9 @@ pub enum LoginError {
 }
 
 pub type Result<T> = core::result::Result<T, Error>;
+
+impl From<reqwest::Error> for Error {
+    fn from(value: reqwest::Error) -> Self {
+        Self::Reqwest(reqwest_middleware::Error::Reqwest(value))
+    }
+}

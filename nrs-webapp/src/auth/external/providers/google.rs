@@ -5,10 +5,10 @@ use crate::model::ModelManager;
 use async_trait::async_trait;
 use oauth2::basic::{BasicErrorResponseType, BasicTokenType};
 use oauth2::{
-    AuthorizationCode, EmptyExtraTokenFields, EndpointMaybeSet, EndpointNotSet, EndpointSet,
-    PkceCodeChallenge, PkceCodeVerifier, RevocationErrorResponseType, StandardErrorResponse,
-    StandardRevocableToken, StandardTokenIntrospectionResponse, StandardTokenResponse,
-    TokenResponse as _,
+    AccessToken, AuthorizationCode, EmptyExtraTokenFields, EndpointMaybeSet, EndpointNotSet,
+    EndpointSet, PkceCodeChallenge, PkceCodeVerifier, RevocationErrorResponseType,
+    StandardErrorResponse, StandardRevocableToken, StandardTokenIntrospectionResponse,
+    StandardTokenResponse, TokenResponse as _,
 };
 use openidconnect::core::{
     CoreAuthDisplay, CoreAuthPrompt, CoreClaimName, CoreClaimType, CoreClient,
@@ -214,6 +214,7 @@ impl AuthProvider for GoogleAuthProvider {
         mm: &ModelManager,
         id_token: IdToken,
         nonce: Option<Nonce>,
+        _access_token: &AccessToken,
         redirect_uri: Url,
     ) -> Result<UserIdentity> {
         let provider_metadata = self.discover_provider_metadata(mm).await?;

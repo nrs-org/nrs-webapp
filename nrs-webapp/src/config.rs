@@ -14,6 +14,12 @@ pub struct GoogleOAuthConfig {
     pub token_uri: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct GithubOAuthConfig {
+    pub client_id: String,
+    pub client_secret: String,
+}
+
 #[derive(Debug)]
 #[allow(non_snake_case)]
 pub struct AppConfig {
@@ -36,6 +42,7 @@ pub struct AppConfig {
 
     pub EMAIL_ACCOUNT_SUPPORT: Option<String>,
     pub GOOGLE_OAUTH_CREDENTIALS: Option<GoogleOAuthConfig>,
+    pub GITHUB_OAUTH_CREDENTIALS: Option<GithubOAuthConfig>,
 }
 
 impl AppConfig {
@@ -170,6 +177,9 @@ impl AppConfig {
             GOOGLE_OAUTH_CREDENTIALS: Self::load_google_oauth_config()
                 .inspect_err(|err| tracing::warn!("GOOGLE_OAUTH_CREDENTIALS not loaded: {err:?}"))
                 .ok(),
+            GITHUB_OAUTH_CREDENTIALS: Self::load_github_oauth_config()
+                .inspect_err(|err| tracing::warn!("GITHUB_OAUTH_CREDENTIALS not loaded: {err:?}"))
+                .ok(),
         })
     }
 
@@ -273,5 +283,14 @@ impl AppConfig {
                 })?;
 
         Ok(credentials.web)
+    }
+
+    fn load_github_oauth_config() -> anyhow::Result<GithubOAuthConfig> {
+        let path = Self::get_env("GITHUB_OAUTH_CREDENTIALS_PATH")?;
+        tracing::info!("Loading GitHub OAuth credentials from {}", path);
+        let credentials = serde_json::from_reader::<_, GithubOAuthConfig>(File::open(&path)?)
+            .with_context(|| format!("Failed to read GitHub OAuth credentials from {}", path))?;
+
+        Ok(credentials)
     }
 }

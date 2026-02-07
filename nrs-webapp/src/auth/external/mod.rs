@@ -61,6 +61,7 @@ pub trait AuthProvider: Send + Sync {
         mm: &ModelManager,
         id_token: IdToken,
         nonce: Option<Nonce>,
+        access_token: &AccessToken,
         redirect_uri: Url,
     ) -> Result<UserIdentity>;
 }
@@ -76,7 +77,10 @@ impl AuthProviderRegistry {
     pub fn from_config() -> Self {
         let mut registry: HashMap<&'static str, Box<dyn AuthProvider>> = HashMap::new();
 
-        for p in [providers::google()].into_iter().flatten() {
+        for p in [providers::google(), providers::github()]
+            .into_iter()
+            .flatten()
+        {
             registry.insert(p.name(), p);
         }
 
