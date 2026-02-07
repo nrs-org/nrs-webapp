@@ -1,3 +1,4 @@
+use crate::auth::external::Result;
 use crate::auth::external::auth_url::{
     AuthorizeUrl, BaseAuthorizeUrlGenerator, OAuthAuthorizeUrlGeneratorTrait,
 };
@@ -17,8 +18,6 @@ use reqwest_middleware::ClientWithMiddleware;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 use url::Url;
-
-use crate::auth::Result;
 
 type GithubCoreClient = Client<
     StandardErrorResponse<BasicErrorResponseType>,

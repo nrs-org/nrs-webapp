@@ -1,6 +1,5 @@
 use std::{collections::HashMap, sync::Arc};
 
-use super::Result;
 use async_trait::async_trait;
 use oauth2::{AccessToken, PkceCodeVerifier};
 use openidconnect::Nonce;
@@ -15,10 +14,13 @@ use crate::{
 };
 
 pub mod auth_url;
+mod error;
 pub mod exch_code;
 pub mod oidc_discover;
 pub mod oidc_fetch_identity;
 mod providers;
+
+pub use error::{Error, Result};
 
 #[derive(Debug, Default, Clone)]
 pub struct UserIdentity {

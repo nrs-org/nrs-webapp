@@ -1,9 +1,7 @@
 use std::any::Any;
 
-use crate::{
-    auth::{Error, Result},
-    model::{HttpClientWrapper, OAuth2HttpClientError},
-};
+use super::{Error, Result};
+use crate::model::{HttpClientWrapper, OAuth2HttpClientError};
 use async_trait::async_trait;
 use oauth2::{
     AccessToken, AuthorizationCode, EndpointMaybeSet, EndpointState, ErrorResponse, RefreshToken,

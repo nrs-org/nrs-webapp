@@ -9,7 +9,7 @@ use openidconnect::{
 };
 use url::Url;
 
-use crate::auth::{Error, Result};
+use super::{Error, Result};
 use crate::model::OAuth2HttpClientError;
 use crate::{
     auth::external::{UserIdentity, exch_code::IdToken},

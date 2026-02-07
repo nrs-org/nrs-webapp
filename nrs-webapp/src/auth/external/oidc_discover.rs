@@ -1,4 +1,4 @@
-use crate::auth::Result;
+use super::Result;
 use openidconnect::{
     AdditionalProviderMetadata, AuthDisplay, ClaimName, ClaimType, ClientAuthMethod, GrantType,
     IssuerUrl, JsonWebKey, JweContentEncryptionAlgorithm, JweKeyManagementAlgorithm,

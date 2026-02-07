@@ -76,10 +76,11 @@ async fn authorize_handler(
         provider
     );
 
-    let provider = mm
-        .auth_providers()
-        .get(&provider)
-        .ok_or_else(|| Error::Auth(auth::Error::ProviderNotFound(provider)))?;
+    let provider = mm.auth_providers().get(&provider).ok_or_else(|| {
+        Error::Auth(auth::Error::ExternalAuth(
+            auth::external::Error::ProviderNotFound(provider.clone()),
+        ))
+    })?;
 
     let redirect_uri = build_redirect_uri(provider.name())?;
 
@@ -90,7 +91,10 @@ async fn authorize_handler(
         redirect_uri
     );
 
-    let AuthorizeUrl { url, state } = provider.authorize_url(&mm, redirect_uri).await?;
+    let AuthorizeUrl { url, state } = provider
+        .authorize_url(&mm, redirect_uri)
+        .await
+        .map_err(auth::Error::ExternalAuth)?;
 
     Ok((
         add_auth_flow_state_cookie(secret_jar, &state)?,
@@ -121,26 +125,31 @@ async fn callback_handler(
         csrf_state,
         nonce,
         pkce_verifier,
-    } = get_auth_flow_state_cookie(&secret_jar)
-        .ok_or_else(|| auth::Error::AuthFlowStateCookieNotFound)?;
+    } = get_auth_flow_state_cookie(&secret_jar).ok_or_else(|| {
+        auth::Error::ExternalAuth(auth::external::Error::AuthFlowStateCookieNotFound)
+    })?;
 
     if csrf_state
         .map(|s| s != CsrfToken::new(state))
         .unwrap_or(false)
     {
-        return Err(Error::Auth(auth::Error::CsrfStateMismatch));
+        return Err(Error::Auth(auth::Error::ExternalAuth(
+            auth::external::Error::CsrfStateMismatch,
+        )));
     }
 
-    let provider = mm
-        .auth_providers()
-        .get(&provider_name)
-        .ok_or_else(|| Error::Auth(auth::Error::ProviderNotFound(provider_name.clone())))?;
+    let provider = mm.auth_providers().get(&provider_name).ok_or_else(|| {
+        Error::Auth(auth::Error::ExternalAuth(
+            auth::external::Error::ProviderNotFound(provider_name.clone()),
+        ))
+    })?;
 
     let redirect_uri = build_redirect_uri(provider.name())?;
 
     let (tokens, id_token) = provider
         .exchange_code(&mm, code, redirect_uri.clone(), pkce_verifier)
-        .await?;
+        .await
+        .map_err(auth::Error::ExternalAuth)?;
 
     let UserIdentity {
         id,
@@ -150,7 +159,8 @@ async fn callback_handler(
         ..
     } = provider
         .fetch_identity(&mm, id_token, nonce, &tokens.access_token, redirect_uri)
-        .await?;
+        .await
+        .map_err(auth::Error::ExternalAuth)?;
 
     let cipher = SymmetricCipher::get_from_config();
     let encrypted_access_token = cipher.encrypt(tokens.access_token.secret().as_bytes())?;
@@ -221,13 +231,17 @@ async fn register_handler(
         email_verified,
         subject,
         provider_name,
-    } = get_temp_tokens_cookie(&secret_jar).ok_or(auth::Error::TempTokenCookieNotFound)?;
+    } = get_temp_tokens_cookie(&secret_jar).ok_or(auth::Error::ExternalAuth(
+        auth::external::Error::TempTokenCookieNotFound,
+    ))?;
 
     // make sure email == email_cookie (if email_cookie exists)
     if let Some(email_cookie) = email_cookie
         && email_cookie != email
     {
-        return Err(Error::Auth(auth::Error::EmailMismatch));
+        return Err(Error::Auth(auth::Error::ExternalAuth(
+            auth::external::Error::EmailMismatch,
+        )));
     }
 
     let password_hash = PasswordHasher::get_from_config().encrypt_password(&password)?;

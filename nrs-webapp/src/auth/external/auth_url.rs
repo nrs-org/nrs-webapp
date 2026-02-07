@@ -1,4 +1,4 @@
-use crate::auth::Result;
+use super::Result;
 use oauth2::{
     CsrfToken, EndpointMaybeSet, EndpointSet, EndpointState, ErrorResponse, PkceCodeChallenge,
     PkceCodeVerifier, RevocableToken, Scope, TokenIntrospectionResponse, TokenResponse,

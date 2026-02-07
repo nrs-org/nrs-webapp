@@ -1,3 +1,4 @@
+use crate::auth::external::Result;
 use crate::auth::external::auth_url::{
     AuthorizeUrl, BaseAuthorizeUrlGenerator, OidcAuthorizeUrlGeneratorTrait,
 };
@@ -26,8 +27,6 @@ use openidconnect::{
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
-
-use crate::auth::Result;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct RevocationEndpointProviderMetadata {

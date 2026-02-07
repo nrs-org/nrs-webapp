@@ -98,7 +98,7 @@ pub fn add_auth_flow_state_cookie(
     jar: PrivateCookieJar,
     auth_flow_state: &AuthFlowState,
 ) -> Result<PrivateCookieJar> {
-    let state_json = serde_json::to_string(auth_flow_state)?;
+    let state_json = serde_json::to_string(auth_flow_state).map_err(external::Error::SerdeJson)?;
     Ok(jar.add(
         Cookie::build((AUTH_FLOW_STATE_COOKIE_NAME, state_json))
             .http_only(true)
