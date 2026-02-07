@@ -81,11 +81,11 @@ pub fn remove_auth_cookie(jar: SignedCookieJar) -> SignedCookieJar {
 /// # Examples
 ///
 /// ```no_run
-/// use axum_extra::extract::PrivateCookieJar;
+/// use axum_extra::extract::SignedCookieJar;
 /// use cookie::Key;
 /// use nrs_webapp::auth::get_auth_cookie;
 ///
-/// let jar = PrivateCookieJar::new(Key::generate());
+/// let jar = SignedCookieJar::new(Key::generate());
 /// // assume a cookie named "nrs_auth_token" was previously added to `jar`
 /// let value = get_auth_cookie(&jar);
 /// assert!(value.is_none() || value.is_some());
