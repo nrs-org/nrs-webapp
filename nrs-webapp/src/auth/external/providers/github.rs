@@ -153,14 +153,12 @@ impl GithubAuthProvider {
     fn create_client(&self, redirect_uri: Url) -> Result<GithubCoreClientWrapper> {
         let client = BasicClient::new(ClientId::new(self.client_id.clone()))
             .set_client_secret(ClientSecret::new(self.client_secret.clone()))
-            .set_auth_uri_option(Some(
-                AuthUrl::new("https://github.com/login/oauth/authorize".into())
-                    .expect("should be valid URL"),
-            ))
-            .set_token_uri_option(Some(
-                TokenUrl::new("https://github.com/login/oauth/access_token".into())
-                    .expect("should be valid URL"),
-            ))
+            .set_auth_uri_option(Some(AuthUrl::new(
+                "https://github.com/login/oauth/authorize".into(),
+            )?))
+            .set_token_uri_option(Some(TokenUrl::new(
+                "https://github.com/login/oauth/access_token".into(),
+            )?))
             .set_redirect_uri(RedirectUrl::from_url(redirect_uri));
         Ok(GithubCoreClientWrapper(client))
     }
