@@ -22,6 +22,12 @@ impl Default for IdToken {
     }
 }
 
+impl IdToken {
+    pub fn new<T: 'static + Send + Sync>(token: T) -> Self {
+        IdToken(Box::new(token))
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct TokenResponse {
     pub access_token: AccessToken,
@@ -216,13 +222,15 @@ where
                 HasUserInfoUrl,
             >,
         > + Sync,
-    AC: AdditionalClaims,
+    AC: AdditionalClaims + Send + Sync,
     AD: AuthDisplay,
-    GC: GenderClaim,
+    GC: GenderClaim + Send + Sync,
     JE: JweContentEncryptionAlgorithm<
-        KeyType = <K::SigningAlgorithm as JwsSigningAlgorithm>::KeyType,
-    >,
+            KeyType = <K::SigningAlgorithm as JwsSigningAlgorithm>::KeyType,
+        > + Send
+        + Sync,
     K: JsonWebKey,
+    <K as JsonWebKey>::SigningAlgorithm: Send + Sync,
     P: AuthPrompt,
     TE: ErrorResponse + Send + 'static,
     TR: openidconnect::TokenResponse<AC, GC, JE, K::SigningAlgorithm> + Send,
@@ -235,6 +243,7 @@ where
     HasRevocationUrl: EndpointState,
     HasUserInfoUrl: EndpointState,
     Error: From<RequestTokenError<OAuth2HttpClientError, TE>>,
+    openidconnect::IdToken<AC, GC, JE, <K as JsonWebKey>::SigningAlgorithm>: Clone,
 {
     type TR = TR;
 
@@ -263,5 +272,13 @@ where
         };
 
         Ok((tokens, self.get_id_token(token_response)?))
+    }
+
+    fn get_id_token(&self, token_resp: Self::TR) -> Result<IdToken> {
+        Ok(token_resp
+            .id_token()
+            .cloned()
+            .map(IdToken::new)
+            .unwrap_or_default())
     }
 }
