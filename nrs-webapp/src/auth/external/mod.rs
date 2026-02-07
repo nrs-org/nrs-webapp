@@ -1,37 +1,24 @@
-use std::{any::Any, collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use super::Result;
 use async_trait::async_trait;
-use oauth2::{AccessToken, CsrfToken, PkceCodeVerifier, RefreshToken};
+use oauth2::{AccessToken, PkceCodeVerifier};
 use openidconnect::Nonce;
-use serde::{Deserialize, Serialize};
-use time::OffsetDateTime;
 use url::Url;
 
-use crate::model::ModelManager;
+use crate::{
+    auth::external::{
+        auth_url::AuthorizeUrl,
+        exch_code::{IdToken, TokenResponse},
+    },
+    model::ModelManager,
+};
 
+pub mod auth_url;
+pub mod exch_code;
+pub mod oidc_discover;
+pub mod oidc_fetch_identity;
 mod providers;
-
-#[derive(Serialize, Deserialize)]
-pub struct AuthFlowState {
-    pub csrf_state: Option<CsrfToken>,
-    pub nonce: Option<Nonce>,
-    pub pkce_verifier: Option<PkceCodeVerifier>,
-}
-
-pub struct AuthorizeUrl {
-    pub url: Url,
-    pub state: AuthFlowState,
-}
-
-pub struct IdToken(pub(super) Box<dyn Any + Send>);
-
-#[derive(Serialize, Deserialize)]
-pub struct TokenResponse {
-    pub access_token: AccessToken,
-    pub refresh_token: Option<RefreshToken>,
-    pub expires_at: Option<OffsetDateTime>,
-}
 
 #[derive(Debug, Default, Clone)]
 pub struct UserIdentity {

@@ -1,20 +1,21 @@
-use crate::auth::external::{
-    AuthFlowState, AuthProvider, AuthorizeUrl, IdToken, TokenResponse, UserIdentity,
+use crate::auth::external::auth_url::{
+    AuthorizeUrl, BaseAuthorizeUrlGenerator, OAuthAuthorizeUrlGeneratorTrait,
 };
-use crate::model::ModelManager;
+use crate::auth::external::exch_code::{BaseCodeExchanger, OAuthCodeExchangerTrait};
+use crate::auth::external::oidc_fetch_identity::IdentityFetcher;
+use crate::auth::external::{AuthProvider, IdToken, TokenResponse, UserIdentity};
+use crate::model::{HttpClientWrapper, ModelManager};
 use async_trait::async_trait;
 use oauth2::basic::{BasicClient, BasicErrorResponseType, BasicTokenType};
 use oauth2::{
-    AccessToken, AuthUrl, AuthorizationCode, Client, EmptyExtraTokenFields, EndpointNotSet,
-    EndpointSet, PkceCodeChallenge, PkceCodeVerifier, RevocationErrorResponseType,
-    StandardErrorResponse, StandardRevocableToken, StandardTokenIntrospectionResponse,
-    StandardTokenResponse, TokenResponse as _, TokenUrl,
+    AccessToken, AuthUrl, Client, EmptyExtraTokenFields, EndpointMaybeSet, EndpointNotSet,
+    PkceCodeVerifier, RevocationErrorResponseType, StandardErrorResponse, StandardRevocableToken,
+    StandardTokenIntrospectionResponse, StandardTokenResponse, TokenUrl,
 };
-use openidconnect::{ClientId, ClientSecret, CsrfToken, Nonce, RedirectUrl, Scope};
+use openidconnect::{ClientId, ClientSecret, Nonce, RedirectUrl};
 use reqwest_middleware::ClientWithMiddleware;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
-use time::OffsetDateTime;
 use url::Url;
 
 use crate::auth::Result;
@@ -25,115 +26,43 @@ type GithubCoreClient = Client<
     StandardTokenIntrospectionResponse<EmptyExtraTokenFields, BasicTokenType>,
     StandardRevocableToken,
     StandardErrorResponse<RevocationErrorResponseType>,
-    EndpointSet,
+    EndpointMaybeSet,
     EndpointNotSet,
     EndpointNotSet,
     EndpointNotSet,
-    EndpointSet,
+    EndpointMaybeSet,
 >;
 
-pub struct GithubAuthProvider {
-    client_id: String,
-    client_secret: String,
+struct GithubCoreClientWrapper(GithubCoreClient);
+
+impl BaseAuthorizeUrlGenerator for GithubCoreClientWrapper {
+    type Client = GithubCoreClient;
+
+    fn as_client(&self) -> &Self::Client {
+        &self.0
+    }
+
+    fn scopes(&self) -> &'static [&'static str] {
+        &["user:email", "read:user"]
+    }
 }
 
-impl GithubAuthProvider {
-    pub fn new(client_id: String, client_secret: String) -> Self {
-        Self {
-            client_id,
-            client_secret,
-        }
-    }
+impl BaseCodeExchanger for GithubCoreClientWrapper {
+    type Client = GithubCoreClient;
 
-    pub fn from_config() -> Option<Self> {
-        let config = crate::config::AppConfig::get()
-            .GITHUB_OAUTH_CREDENTIALS
-            .as_ref()?;
-        Some(Self::new(
-            config.client_id.clone(),
-            config.client_secret.clone(),
-        ))
-    }
-
-    fn create_client(&self, redirect_uri: Url) -> Result<GithubCoreClient> {
-        let client = BasicClient::new(ClientId::new(self.client_id.clone()))
-            .set_client_secret(ClientSecret::new(self.client_secret.clone()))
-            .set_auth_uri(
-                AuthUrl::new("https://github.com/login/oauth/authorize".into())
-                    .expect("should be valid URL"),
-            )
-            .set_token_uri(
-                TokenUrl::new("https://github.com/login/oauth/access_token".into())
-                    .expect("should be valid URL"),
-            )
-            .set_redirect_uri(RedirectUrl::from_url(redirect_uri));
-        Ok(client)
+    fn as_client(&self) -> &Self::Client {
+        &self.0
     }
 }
 
 #[async_trait]
-impl AuthProvider for GithubAuthProvider {
-    fn name(&self) -> &'static str {
-        "github"
-    }
-
-    async fn authorize_url(&self, _mm: &ModelManager, redirect_uri: Url) -> Result<AuthorizeUrl> {
-        let client = self.create_client(redirect_uri)?;
-
-        let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
-
-        let (authorize_url, csrf_state) = client
-            .authorize_url(CsrfToken::new_random)
-            .set_pkce_challenge(pkce_challenge)
-            .add_scope(Scope::new("user:email".to_string()))
-            .add_scope(Scope::new("read:user".to_string()))
-            .url();
-
-        Ok(AuthorizeUrl {
-            url: authorize_url,
-            state: AuthFlowState {
-                csrf_state: Some(csrf_state),
-                nonce: None,
-                pkce_verifier: Some(pkce_verifier),
-            },
-        })
-    }
-
-    async fn exchange_code(
-        &self,
-        mm: &ModelManager,
-        code: String,
-        redirect_uri: Url,
-        pkce_verifier: Option<PkceCodeVerifier>,
-    ) -> Result<(TokenResponse, IdToken)> {
-        let client = self.create_client(redirect_uri.clone())?;
-
-        let mut req = client.exchange_code(AuthorizationCode::new(code.to_string()));
-
-        if let Some(pkce_verifier) = pkce_verifier {
-            req = req.set_pkce_verifier(pkce_verifier);
-        }
-
-        let token_response = req.request_async(mm.http_client_wrapper()).await?;
-
-        let tokens = TokenResponse {
-            access_token: token_response.access_token().clone(),
-            refresh_token: token_response.refresh_token().cloned(),
-            expires_at: token_response
-                .expires_in()
-                .map(|dur| OffsetDateTime::now_utc() + dur),
-        };
-
-        Ok((tokens, IdToken(Box::new(()))))
-    }
-
+impl IdentityFetcher for GithubCoreClientWrapper {
     async fn fetch_identity(
         &self,
-        mm: &ModelManager,
-        _id_token: IdToken,
-        _nonce: Option<Nonce>,
+        http_client: &HttpClientWrapper,
+        _id_token: &IdToken,
         access_token: &AccessToken,
-        _redirect_uri: Url,
+        _nonce: Option<Nonce>,
     ) -> Result<UserIdentity> {
         async fn http_get<E: DeserializeOwned>(
             client: &ClientWithMiddleware,
@@ -166,23 +95,14 @@ impl AuthProvider for GithubAuthProvider {
             verified: bool,
         }
 
-        let user: User = http_get(
-            mm.http_client(),
-            "https://api.github.com/user",
-            access_token,
-        )
-        .await?;
-
-        tracing::debug!("GitHub user info: {:?}", user);
+        let user: User = http_get(http_client, "https://api.github.com/user", access_token).await?;
 
         let emails: Vec<UserEmail> = http_get(
-            mm.http_client(),
+            http_client,
             "https://api.github.com/user/emails",
             access_token,
         )
         .await?;
-
-        tracing::debug!("GitHub user emails: {:?}", emails);
 
         // TODO: better email selection logic?
         // TODO: allow the user to select which email?
@@ -205,5 +125,81 @@ impl AuthProvider for GithubAuthProvider {
             email_verified: true,
             profile_picture: Some(Url::parse(&user.avatar_url)?),
         })
+    }
+}
+
+pub struct GithubAuthProvider {
+    client_id: String,
+    client_secret: String,
+}
+
+impl GithubAuthProvider {
+    pub fn new(client_id: String, client_secret: String) -> Self {
+        Self {
+            client_id,
+            client_secret,
+        }
+    }
+
+    pub fn from_config() -> Option<Self> {
+        let config = crate::config::AppConfig::get()
+            .GITHUB_OAUTH_CREDENTIALS
+            .as_ref()?;
+        Some(Self::new(
+            config.client_id.clone(),
+            config.client_secret.clone(),
+        ))
+    }
+
+    fn create_client(&self, redirect_uri: Url) -> Result<GithubCoreClientWrapper> {
+        let client = BasicClient::new(ClientId::new(self.client_id.clone()))
+            .set_client_secret(ClientSecret::new(self.client_secret.clone()))
+            .set_auth_uri_option(Some(
+                AuthUrl::new("https://github.com/login/oauth/authorize".into())
+                    .expect("should be valid URL"),
+            ))
+            .set_token_uri_option(Some(
+                TokenUrl::new("https://github.com/login/oauth/access_token".into())
+                    .expect("should be valid URL"),
+            ))
+            .set_redirect_uri(RedirectUrl::from_url(redirect_uri));
+        Ok(GithubCoreClientWrapper(client))
+    }
+}
+
+#[async_trait]
+impl AuthProvider for GithubAuthProvider {
+    fn name(&self) -> &'static str {
+        "github"
+    }
+
+    async fn authorize_url(&self, _mm: &ModelManager, redirect_uri: Url) -> Result<AuthorizeUrl> {
+        self.create_client(redirect_uri)?
+            .create_authorize_url_oauth()
+    }
+
+    async fn exchange_code(
+        &self,
+        mm: &ModelManager,
+        code: String,
+        redirect_uri: Url,
+        pkce_verifier: Option<PkceCodeVerifier>,
+    ) -> Result<(TokenResponse, IdToken)> {
+        self.create_client(redirect_uri)?
+            .exchange_code_oauth(mm.http_client_wrapper(), code, pkce_verifier)
+            .await
+    }
+
+    async fn fetch_identity(
+        &self,
+        mm: &ModelManager,
+        _id_token: IdToken,
+        _nonce: Option<Nonce>,
+        access_token: &AccessToken,
+        redirect_uri: Url,
+    ) -> Result<UserIdentity> {
+        self.create_client(redirect_uri)?
+            .fetch_identity(mm.http_client_wrapper(), &_id_token, access_token, _nonce)
+            .await
     }
 }

@@ -27,7 +27,10 @@ use crate::{
     Error, Result,
     auth::{
         TempTokensCookie, add_auth_cookie, add_auth_flow_state_cookie, add_temp_tokens_cookie,
-        external::{AuthFlowState, AuthorizeUrl, UserIdentity},
+        external::{
+            UserIdentity,
+            auth_url::{AuthFlowState, AuthorizeUrl},
+        },
         get_auth_flow_state_cookie, get_temp_tokens_cookie, remove_auth_flow_state_cookie,
         remove_temp_tokens_cookie,
     },

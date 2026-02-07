@@ -1,15 +1,19 @@
-use crate::auth::external::{
-    AuthFlowState, AuthProvider, AuthorizeUrl, IdToken, TokenResponse, UserIdentity,
+use crate::auth::external::auth_url::{
+    AuthorizeUrl, BaseAuthorizeUrlGenerator, OidcAuthorizeUrlGeneratorTrait,
 };
+use crate::auth::external::exch_code::{BaseCodeExchanger, OidcCodeExchangerTrait};
+use crate::auth::external::oidc_discover::oidc_discover;
+use crate::auth::external::oidc_fetch_identity::{BaseIdentityFetcher, OidcIdentityFetcherTrait};
+use crate::auth::external::{AuthProvider, IdToken, TokenResponse, UserIdentity};
 use crate::model::ModelManager;
 use async_trait::async_trait;
 use oauth2::basic::{BasicErrorResponseType, BasicTokenType};
 use oauth2::{
-    AccessToken, AuthorizationCode, EmptyExtraTokenFields, EndpointMaybeSet, EndpointNotSet,
-    EndpointSet, PkceCodeChallenge, PkceCodeVerifier, RevocationErrorResponseType,
-    StandardErrorResponse, StandardRevocableToken, StandardTokenIntrospectionResponse,
-    StandardTokenResponse, TokenResponse as _,
+    AccessToken, EmptyExtraTokenFields, EndpointMaybeSet, EndpointNotSet, EndpointSet,
+    PkceCodeVerifier, RevocationErrorResponseType, StandardErrorResponse, StandardRevocableToken,
+    StandardTokenIntrospectionResponse, StandardTokenResponse,
 };
+use openidconnect::DiscoveryError;
 use openidconnect::core::{
     CoreAuthDisplay, CoreAuthPrompt, CoreClaimName, CoreClaimType, CoreClient,
     CoreClientAuthMethod, CoreGenderClaim, CoreGrantType, CoreJsonWebKey,
@@ -17,16 +21,13 @@ use openidconnect::core::{
     CoreResponseMode, CoreResponseType, CoreSubjectIdentifierType,
 };
 use openidconnect::{
-    AdditionalProviderMetadata, AuthenticationFlow, Client, ClientId, ClientSecret, CsrfToken,
-    EmptyAdditionalClaims, IdTokenFields, IssuerUrl, Nonce, ProviderMetadata, RedirectUrl,
-    RevocationUrl, Scope,
+    AdditionalProviderMetadata, Client, ClientId, ClientSecret, EmptyAdditionalClaims,
+    IdTokenFields, Nonce, ProviderMetadata, RedirectUrl, RevocationUrl,
 };
-use openidconnect::{DiscoveryError, TokenResponse as _};
 use serde::{Deserialize, Serialize};
-use time::OffsetDateTime;
 use url::Url;
 
-use crate::auth::{self, Result};
+use crate::auth::Result;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct RevocationEndpointProviderMetadata {
@@ -78,12 +79,35 @@ type GoogleCoreClient = Client<
     EndpointMaybeSet,
 >;
 
-type GoogleIdToken = openidconnect::IdToken<
-    EmptyAdditionalClaims,
-    CoreGenderClaim,
-    CoreJweContentEncryptionAlgorithm,
-    CoreJwsSigningAlgorithm,
->;
+struct GoogleCoreClientWrapper(GoogleCoreClient);
+
+impl BaseAuthorizeUrlGenerator for GoogleCoreClientWrapper {
+    type Client = GoogleCoreClient;
+
+    fn as_client(&self) -> &Self::Client {
+        &self.0
+    }
+
+    fn scopes(&self) -> &'static [&'static str] {
+        &["email", "profile"]
+    }
+}
+
+impl BaseCodeExchanger for GoogleCoreClientWrapper {
+    type Client = GoogleCoreClient;
+
+    fn as_client(&self) -> &Self::Client {
+        &self.0
+    }
+}
+
+impl BaseIdentityFetcher for GoogleCoreClientWrapper {
+    type Client = GoogleCoreClient;
+
+    fn as_client(&self) -> &Self::Client {
+        &self.0
+    }
+}
 
 pub struct GoogleAuthProvider {
     client_id: String,
@@ -108,22 +132,13 @@ impl GoogleAuthProvider {
         ))
     }
 
-    async fn discover_provider_metadata(
+    async fn client(
         &self,
         mm: &ModelManager,
-    ) -> Result<GoogleProviderMetadata> {
-        let issuer_url =
-            IssuerUrl::new("https://accounts.google.com".to_string()).expect("valid issuer URL");
-        let provider_metadata =
-            GoogleProviderMetadata::discover_async(issuer_url, mm.http_client_wrapper()).await?;
-        Ok(provider_metadata)
-    }
-
-    fn create_client(
-        &self,
-        provider_metadata: GoogleProviderMetadata,
         redirect_uri: Url,
-    ) -> Result<GoogleCoreClient> {
+    ) -> Result<GoogleCoreClientWrapper> {
+        let provider_metadata: GoogleProviderMetadata =
+            oidc_discover(mm, "https://accounts.google.com").await?;
         let revocation_endpoint = provider_metadata
             .additional_metadata()
             .revocation_endpoint
@@ -137,7 +152,7 @@ impl GoogleAuthProvider {
         .set_revocation_url(
             RevocationUrl::new(revocation_endpoint).map_err(DiscoveryError::UrlParse)?,
         );
-        Ok(client)
+        Ok(GoogleCoreClientWrapper(client))
     }
 }
 
@@ -148,30 +163,9 @@ impl AuthProvider for GoogleAuthProvider {
     }
 
     async fn authorize_url(&self, mm: &ModelManager, redirect_uri: Url) -> Result<AuthorizeUrl> {
-        let provider_metadata = self.discover_provider_metadata(mm).await?;
-        let client = self.create_client(provider_metadata, redirect_uri)?;
-
-        let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
-
-        let (authorize_url, csrf_state, nonce) = client
-            .authorize_url(
-                AuthenticationFlow::<CoreResponseType>::AuthorizationCode,
-                CsrfToken::new_random,
-                Nonce::new_random,
-            )
-            .set_pkce_challenge(pkce_challenge)
-            .add_scope(Scope::new("email".to_string()))
-            .add_scope(Scope::new("profile".to_string()))
-            .url();
-
-        Ok(AuthorizeUrl {
-            url: authorize_url,
-            state: AuthFlowState {
-                csrf_state: Some(csrf_state),
-                nonce: Some(nonce),
-                pkce_verifier: Some(pkce_verifier),
-            },
-        })
+        self.client(mm, redirect_uri)
+            .await?
+            .create_authorize_url_oidc()
     }
 
     async fn exchange_code(
@@ -181,32 +175,10 @@ impl AuthProvider for GoogleAuthProvider {
         redirect_uri: Url,
         pkce_verifier: Option<PkceCodeVerifier>,
     ) -> Result<(TokenResponse, IdToken)> {
-        let provider_metadata = self.discover_provider_metadata(mm).await?;
-        let client = self.create_client(provider_metadata, redirect_uri.clone())?;
-
-        let mut req = client.exchange_code(AuthorizationCode::new(code.to_string()))?;
-
-        if let Some(pkce_verifier) = pkce_verifier {
-            req = req.set_pkce_verifier(pkce_verifier);
-        }
-
-        let token_response = req.request_async(mm.http_client_wrapper()).await?;
-
-        let id_token = token_response
-            .id_token()
-            .cloned()
-            .map(|id_token| IdToken(Box::new(id_token)))
-            .expect("Google always returns ID tokens");
-
-        let tokens = TokenResponse {
-            access_token: token_response.access_token().clone(),
-            refresh_token: token_response.refresh_token().cloned(),
-            expires_at: token_response
-                .expires_in()
-                .map(|dur| OffsetDateTime::now_utc() + dur),
-        };
-
-        Ok((tokens, id_token))
+        self.client(mm, redirect_uri)
+            .await?
+            .exchange_code_oidc(mm.http_client_wrapper(), code, pkce_verifier)
+            .await
     }
 
     async fn fetch_identity(
@@ -214,29 +186,12 @@ impl AuthProvider for GoogleAuthProvider {
         mm: &ModelManager,
         id_token: IdToken,
         nonce: Option<Nonce>,
-        _access_token: &AccessToken,
+        access_token: &AccessToken,
         redirect_uri: Url,
     ) -> Result<UserIdentity> {
-        let provider_metadata = self.discover_provider_metadata(mm).await?;
-        let client = self.create_client(provider_metadata, redirect_uri)?;
-
-        let id_token = id_token
-            .0
-            .downcast::<GoogleIdToken>()
-            .map_err(|_| auth::Error::InvalidIdTokenType)?;
-
-        let verifier = client.id_token_verifier();
-        let claims = id_token.claims(&verifier, &nonce.ok_or(auth::Error::NonceMissing)?)?;
-
-        Ok(UserIdentity {
-            id: claims.subject().to_string(),
-            username: claims.preferred_username().map(|u| u.to_string()),
-            email: claims.email().map(|e| e.to_string()),
-            email_verified: claims.email_verified().unwrap_or(false),
-            profile_picture: claims.picture().and_then(|urls| {
-                urls.iter()
-                    .find_map(|(_, url)| Url::parse(url.as_str()).ok())
-            }),
-        })
+        self.client(mm, redirect_uri)
+            .await?
+            .fetch_identity_oidc(mm.http_client_wrapper(), &id_token, access_token, nonce)
+            .await
     }
 }

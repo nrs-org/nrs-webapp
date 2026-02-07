@@ -9,7 +9,11 @@ use axum_extra::extract::{
 pub use error::{Error, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::{auth::external::TokenResponse, config::AppConfig, crypt::session_token::SessionToken};
+use crate::{
+    auth::external::{auth_url::AuthFlowState, exch_code::TokenResponse},
+    config::AppConfig,
+    crypt::session_token::SessionToken,
+};
 
 const AUTH_COOKIE_NAME: &str = "nrs_auth_token";
 const AUTH_FLOW_STATE_COOKIE_NAME: &str = "nrs_auth_flow_state";
@@ -92,7 +96,7 @@ pub fn get_auth_cookie(jar: &SignedCookieJar) -> Option<String> {
 
 pub fn add_auth_flow_state_cookie(
     jar: SignedCookieJar,
-    auth_flow_state: &external::AuthFlowState,
+    auth_flow_state: &AuthFlowState,
 ) -> Result<SignedCookieJar> {
     let state_json = serde_json::to_string(auth_flow_state)?;
     Ok(jar.add(
@@ -112,7 +116,7 @@ pub fn remove_auth_flow_state_cookie(jar: SignedCookieJar) -> SignedCookieJar {
     jar.remove(Cookie::build(AUTH_FLOW_STATE_COOKIE_NAME).path("/auth/oauth"))
 }
 
-pub fn get_auth_flow_state_cookie(jar: &SignedCookieJar) -> Option<external::AuthFlowState> {
+pub fn get_auth_flow_state_cookie(jar: &SignedCookieJar) -> Option<AuthFlowState> {
     if let Some(cookie) = jar.get(AUTH_FLOW_STATE_COOKIE_NAME) {
         match serde_json::from_str(cookie.value()) {
             Ok(state) => return Some(state),

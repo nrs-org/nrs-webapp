@@ -1,4 +1,4 @@
-use std::{path::PathBuf, pin::Pin, sync::Arc};
+use std::{ops::Deref, path::PathBuf, pin::Pin, sync::Arc};
 
 use crate::{
     auth::external::AuthProviderRegistry,
@@ -34,6 +34,14 @@ pub struct ModelManager {
 
 #[derive(Clone)]
 pub struct HttpClientWrapper(reqwest_middleware::ClientWithMiddleware);
+
+impl Deref for HttpClientWrapper {
+    type Target = reqwest_middleware::ClientWithMiddleware;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 pub type OAuth2HttpClientError = HttpClientError<reqwest_middleware::Error>;
 
