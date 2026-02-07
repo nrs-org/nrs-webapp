@@ -193,13 +193,13 @@ impl AuthProvider for GithubAuthProvider {
     async fn fetch_identity(
         &self,
         mm: &ModelManager,
-        _id_token: IdToken,
-        _nonce: Option<Nonce>,
+        id_token: IdToken,
+        nonce: Option<Nonce>,
         access_token: &AccessToken,
         redirect_uri: Url,
     ) -> Result<UserIdentity> {
         self.create_client(redirect_uri)?
-            .fetch_identity(mm.http_client_wrapper(), &_id_token, access_token, _nonce)
+            .fetch_identity(mm.http_client_wrapper(), &id_token, access_token, nonce)
             .await
     }
 }
