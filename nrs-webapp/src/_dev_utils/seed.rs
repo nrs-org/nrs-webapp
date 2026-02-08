@@ -92,9 +92,8 @@ async fn seed_entries(mm: &mut ModelManager) {
     tracing::info!("{:<12} -- seed_entries()", "FOR-DEV-ONLY");
 
     let entries = include_str!("latest-pj-escape-bulk.json");
-    let Bulk {
-        entries, scores, ..
-    } = serde_json::from_str::<Bulk>(entries).expect("Unable to decode JSON");
+    let Bulk { entries, .. } =
+        serde_json::from_str::<Bulk>(entries).expect("Unable to decode JSON");
     let num_entries = entries.len();
 
     let create_reqs = entries.into_iter().map(|(id, e)| EntryForCreate {
@@ -111,14 +110,6 @@ async fn seed_entries(mm: &mut ModelManager) {
             .and_then(EntryType::from_enum_string)
             .unwrap_or_default(),
         added_by: test_user_id(),
-        overall_score: scores
-            .get(&id)
-            .and_then(|r| {
-                r.meta
-                    .as_object()
-                    .and_then(|meta| meta.get("DAH_overall_score").and_then(|v| v.as_f64()))
-            })
-            .unwrap_or_default(),
         id,
     });
 

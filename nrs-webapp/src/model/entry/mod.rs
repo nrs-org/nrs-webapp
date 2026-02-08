@@ -26,7 +26,6 @@ pub struct EntryForCreate {
     pub title: String,
     pub entry_type: EntryType,
     pub added_by: Uuid,
-    pub overall_score: f64,
 }
 
 impl EntryBmc {
