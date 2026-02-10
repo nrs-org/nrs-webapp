@@ -47,7 +47,7 @@ fn theme_controller() -> impl Renderable {
 /// ```
 #[component]
 pub fn navbar(logged_in: bool) -> impl Renderable {
-    let routes = [("Home", "/"), ("Entries", "/entries")];
+    let routes = [("Home", "/"), ("Entries", "/entry")];
 
     rsx! {
         <header class="navbar bg-base-100 shadow-sm">

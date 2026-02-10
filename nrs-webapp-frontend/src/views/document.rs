@@ -54,6 +54,7 @@ pub fn document<R: Renderable>(props: &DocumentProps, children: &R) -> impl Rend
                 <script src="/static/create-entry-form.js" type="module"></script>
                 <script src="/static/toast-on-load.js" type="module" defer></script>
                 <script src="/static/alpine.min.js" defer></script>
+                <link rel="stylesheet" href="/static/prism.css">
                 <link rel="stylesheet" href="/static/generated/output.css">
                 <script>
                     (live_reload_script)
@@ -79,6 +80,8 @@ pub fn document<R: Renderable>(props: &DocumentProps, children: &R) -> impl Rend
                     </main>
                     <Footer />
                 </div>
+                <script src="/static/prism.js"></script>
+                <script src="/static/prism-htmx.js"></script>
             </body>
         </html>
     }

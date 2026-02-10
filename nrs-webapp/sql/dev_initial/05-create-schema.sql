@@ -21,3 +21,8 @@ CREATE TABLE entry (
     added_by UUID REFERENCES app_user(id),
     entry_info JSONB NOT NULL DEFAULT '{}'::JSONB
 );
+
+CREATE TABLE entry_alias (
+    old_id VARCHAR(50) NOT NULL PRIMARY KEY,
+    new_id VARCHAR(50) NOT NULL REFERENCES entry(id) ON DELETE CASCADE
+);

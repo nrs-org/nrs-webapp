@@ -17,7 +17,7 @@ use nrs_webapp_frontend::{
     views::pages::auth::forgot_pass::{forgot_pass, forgot_pass_sent, reset_pass},
 };
 use serde::Deserialize;
-use sqlbindable::Fields;
+use sqlbindable::{FieldNames, Fields};
 use sqlx::prelude::FromRow;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -226,7 +226,7 @@ async fn send_reset_password_link(
     }
 }
 
-#[derive(Debug, FromRow, Fields)]
+#[derive(Debug, FromRow, FieldNames, Fields)]
 struct UserIdNameEmailVerifiedAt {
     id: Uuid,
     username: String,

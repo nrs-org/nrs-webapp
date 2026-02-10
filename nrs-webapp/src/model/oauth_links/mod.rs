@@ -1,5 +1,5 @@
 use sea_query::{Expr, ExprTrait, IntoColumnRef, Query, ReturningClause};
-use sqlbindable::{BindContext, Fields, HasFields};
+use sqlbindable::{BindContext, FieldNames, Fields, HasFields};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
@@ -12,7 +12,7 @@ impl DbBmc for OAuthLinkBmc {
     const TABLE_NAME: &'static str = "app_user_oauth_link";
 }
 
-#[derive(Fields)]
+#[derive(FieldNames, Fields)]
 pub struct OAuthLinkForCreate {
     pub user_id: Uuid,
     pub provider: String,
@@ -22,7 +22,7 @@ pub struct OAuthLinkForCreate {
     pub access_token_expires_at: Option<OffsetDateTime>,
 }
 
-#[derive(Fields)]
+#[derive(FieldNames, Fields)]
 pub struct OAuthLinkForUpdate {
     pub access_token: Vec<u8>,
     pub refresh_token: Option<Vec<u8>>,
@@ -57,7 +57,7 @@ impl OAuthLinkBmc {
         user_id: Uuid,
         provider_name: &str,
     ) -> Result<()> {
-        #[derive(Fields)]
+        #[derive(FieldNames, Fields)]
         struct OAuthLinkRevokePayload {
             pub revoked_at: Expr,
         }

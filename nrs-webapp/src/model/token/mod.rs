@@ -1,5 +1,7 @@
 use sea_query::{Expr, ExprTrait, OnConflict, Query, Value};
-use sqlbindable::{BindContext, Fields, HasFields, TryIntoExpr, TryIntoExprError};
+use sqlbindable::{
+    BindContext, FieldNames, Fields, HasFieldNames, HasFields, TryIntoExpr, TryIntoExprError,
+};
 use sqlx::prelude::FromRow;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -70,7 +72,7 @@ impl DbBmc for UserOneTimeTokenBmc {
     const TABLE_NAME: &'static str = "user_one_time_token";
 }
 
-#[derive(Debug, Clone, Fields)]
+#[derive(Debug, Clone, FieldNames, Fields)]
 pub struct UserOneTimeTokenCreateReq {
     pub user_id: Uuid,
     pub purpose: TokenPurpose,

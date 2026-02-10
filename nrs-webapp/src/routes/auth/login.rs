@@ -9,7 +9,7 @@ use axum_extra::{TypedHeader, extract::SignedCookieJar, headers::UserAgent};
 use axum_htmx::{HxRedirect, HxRequest};
 use nrs_webapp_frontend::{maybe_document, views::pages::auth::login::login};
 use serde::Deserialize;
-use sqlbindable::Fields;
+use sqlbindable::{FieldNames, Fields};
 use sqlx::FromRow;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -65,7 +65,7 @@ struct LoginPayload {
     password: String,
 }
 
-#[derive(Fields, FromRow)]
+#[derive(FieldNames, Fields, FromRow)]
 struct LoginUser {
     id: Uuid,
     password_hash: String,

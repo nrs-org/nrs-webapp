@@ -1,5 +1,5 @@
 use sea_query::{Expr, ExprTrait};
-use sqlbindable::{Fields, HasFields};
+use sqlbindable::{FieldNames, Fields, HasFields};
 use sqlx::FromRow;
 use uuid::Uuid;
 
@@ -20,19 +20,19 @@ impl DbBmcWithPkey for UserBmc {
     type PkeyType = Uuid;
 }
 
-#[derive(Debug, Clone, FromRow, Fields)]
+#[derive(Debug, Clone, FromRow, FieldNames, Fields)]
 pub struct UserForCreate {
     pub username: String,
     pub email: String,
     pub password_hash: String,
 }
 
-#[derive(Fields)]
+#[derive(FieldNames, Fields)]
 struct UserMarkEmailVerified {
     pub email_verified_at: Expr,
 }
 
-#[derive(Fields)]
+#[derive(FieldNames, Fields)]
 struct UserResetPassword {
     pub password_hash: String,
 }

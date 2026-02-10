@@ -1,5 +1,7 @@
-use sea_query::{Expr, ExprTrait, Order, Query, ReturningClause, SimpleExpr, Value};
-use sqlbindable::{BindContext, HasFields};
+use sea_query::{
+    Expr, ExprTrait, Order, Query, ReturningClause, SelectStatement, SimpleExpr, Value,
+};
+use sqlbindable::{BindContext, HasFieldNames, HasFields};
 
 use crate::model::{
     Error, Result, SqlxDatabase, SqlxRow, entity::id::EntityId, store::primary_store::PrimaryStore,
@@ -7,11 +9,62 @@ use crate::model::{
 
 pub mod id;
 
+pub trait ApplyExt<T> {
+    fn apply(&mut self, option: T) -> &mut Self;
+    fn apply_alias(&mut self, option: T, table_alias: &'static str) -> &mut Self;
+}
+
 #[derive(Default, Clone, Debug)]
 pub struct ListPayload {
     pub offset: Option<usize>,
     pub limit: Option<usize>,
     pub order_by: Option<(&'static str, Order)>,
+}
+
+impl ListPayload {
+    pub fn apply_offset_limit(&self, query: &mut SelectStatement) {
+        if let Some(offset) = self.offset {
+            query.offset(offset as u64);
+        }
+
+        if let Some(limit) = self.limit {
+            query.limit(limit as u64);
+        }
+    }
+
+    pub fn apply_order_by(self, query: &mut SelectStatement) {
+        if let Some((col, order)) = self.order_by.as_ref().cloned() {
+            query.order_by(col, order);
+        }
+    }
+
+    pub fn apply_order_by_alias(self, query: &mut SelectStatement, table_alias: &'static str) {
+        if let Some((col, order)) = self.order_by {
+            query.order_by((table_alias, col), order);
+        }
+    }
+
+    pub fn apply(self, query: &mut SelectStatement) {
+        self.apply_offset_limit(query);
+        self.apply_order_by(query);
+    }
+
+    pub fn apply_alias(self, query: &mut SelectStatement, table_alias: &'static str) {
+        self.apply_offset_limit(query);
+        self.apply_order_by_alias(query, table_alias);
+    }
+}
+
+impl ApplyExt<ListPayload> for SelectStatement {
+    fn apply(&mut self, option: ListPayload) -> &mut Self {
+        option.apply(self);
+        self
+    }
+
+    fn apply_alias(&mut self, option: ListPayload, table_alias: &'static str) -> &mut Self {
+        option.apply_alias(self, table_alias);
+        self
+    }
 }
 
 #[allow(async_fn_in_trait)]
@@ -60,7 +113,7 @@ pub trait DbBmc: Send {
 
     async fn get_optional_by_expr<E>(ps: &mut impl PrimaryStore, cond: Expr) -> Result<Option<E>>
     where
-        E: for<'r> sqlx::FromRow<'r, SqlxRow> + Send + Unpin + HasFields,
+        E: for<'r> sqlx::FromRow<'r, SqlxRow> + Send + Unpin + HasFieldNames,
     {
         let maybe_entity = ps
             .query_as_with::<E>(
@@ -76,7 +129,7 @@ pub trait DbBmc: Send {
 
     async fn get_all_by_expr<E>(ps: &mut impl PrimaryStore, cond: Expr) -> Result<Vec<E>>
     where
-        E: for<'r> sqlx::FromRow<'r, SqlxRow> + Send + Unpin + HasFields,
+        E: for<'r> sqlx::FromRow<'r, SqlxRow> + Send + Unpin + HasFieldNames,
     {
         let entities = ps
             .query_as_with::<E>(
@@ -92,26 +145,17 @@ pub trait DbBmc: Send {
 
     async fn list<E>(ps: &mut impl PrimaryStore, payload: ListPayload) -> Result<Vec<E>>
     where
-        E: for<'r> sqlx::FromRow<'r, SqlxRow> + Send + Unpin + HasFields,
+        E: for<'r> sqlx::FromRow<'r, SqlxRow> + Send + Unpin + HasFieldNames,
     {
-        let mut query = Query::select();
-        let mut query = query
-            .from(Self::TABLE_NAME)
-            .columns(E::field_names().iter().copied());
-
-        if let Some((col, order)) = payload.order_by {
-            query = query.order_by(col, order);
-        }
-
-        if let Some(offset) = payload.offset {
-            query = query.offset(offset as u64);
-        }
-
-        if let Some(limit) = payload.limit {
-            query = query.limit(limit as u64);
-        }
-
-        let entities = ps.query_as_with::<E>(query).fetch_all().await?;
+        let entities = ps
+            .query_as_with::<E>(
+                Query::select()
+                    .from(Self::TABLE_NAME)
+                    .columns(E::field_names().iter().copied())
+                    .apply_alias(payload, Self::TABLE_NAME),
+            )
+            .fetch_all()
+            .await?;
         Ok(entities)
     }
 
@@ -150,7 +194,14 @@ pub trait DbBmcWithPkey: DbBmc {
     where
         Value: From<Self::PkeyType>,
     {
-        Expr::col(Self::PRIMARY_KEY).eq(pkey)
+        Self::cond_pkey_alias(pkey, Self::TABLE_NAME)
+    }
+
+    fn cond_pkey_alias(pkey: Self::PkeyType, table_alias: &'static str) -> SimpleExpr
+    where
+        Value: From<Self::PkeyType>,
+    {
+        Expr::col((table_alias, Self::PRIMARY_KEY)).eq(pkey)
     }
 
     fn returning_pkey() -> ReturningClause {
@@ -179,7 +230,7 @@ pub trait DbBmcWithPkey: DbBmc {
 
     async fn get<E>(mm: &mut impl PrimaryStore, id: Self::PkeyType) -> Result<E>
     where
-        E: for<'r> sqlx::FromRow<'r, SqlxRow> + Send + Unpin + HasFields,
+        E: for<'r> sqlx::FromRow<'r, SqlxRow> + Send + Unpin + HasFieldNames,
         Value: From<Self::PkeyType>,
     {
         Self::get_optional_by_expr::<E>(mm, Self::cond_pkey(id.clone()))

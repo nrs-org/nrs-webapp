@@ -2,21 +2,16 @@ use sea_query::{Expr, InsertStatement, Nullable, SimpleExpr, UpdateStatement};
 use thiserror::Error;
 
 use crate as sqlbindable;
+pub use sqlbindable_macros::FieldNames;
 pub use sqlbindable_macros::Fields;
 
-pub trait HasFields {
+pub trait HasFieldNames {
+    fn field_names() -> FieldNameVec;
+}
+
+pub trait HasFields: HasFieldNames {
     fn not_none_fields(self) -> Result<FieldVec, TryIntoExprError>;
     fn all_fields(self) -> Result<FieldVec, TryIntoExprError>;
-    fn field_names() -> &'static [&'static str];
-
-    fn all_fields_except(self, field_name: &str) -> Result<FieldVec, TryIntoExprError>
-    where
-        Self: Sized,
-    {
-        let mut all_fields = self.all_fields()?;
-        all_fields.0.retain(|field| field.name != field_name);
-        Ok(all_fields)
-    }
 }
 
 pub struct Field {
@@ -24,7 +19,91 @@ pub struct Field {
     pub value: SimpleExpr,
 }
 
+pub struct DerivedField {
+    pub name: String,
+    pub value: SimpleExpr,
+}
+
 pub struct FieldVec(pub Vec<Field>);
+pub struct DerivedFieldVec(pub Vec<DerivedField>);
+
+impl FieldVec {
+    pub fn add_prefix(&self, prefix: &str) -> DerivedFieldVec {
+        let derived_fields = self
+            .0
+            .iter()
+            .map(|field| DerivedField {
+                name: format!("{}.{}", prefix, field.name),
+                value: field.value.clone(),
+            })
+            .collect();
+        DerivedFieldVec(derived_fields)
+    }
+}
+
+impl DerivedFieldVec {
+    pub fn add_prefix(&self, prefix: &str) -> DerivedFieldVec {
+        let derived_fields = self
+            .0
+            .iter()
+            .map(|field| DerivedField {
+                name: format!("{}.{}", prefix, field.name),
+                value: field.value.clone(),
+            })
+            .collect();
+        DerivedFieldVec(derived_fields)
+    }
+}
+
+pub struct FieldNameVec(pub &'static [&'static str]);
+pub struct DerivedFieldNameVec(pub Vec<String>);
+
+impl FieldNameVec {
+    pub fn add_prefix(&self, prefix: &str) -> DerivedFieldNameVec {
+        let derived_names = self
+            .0
+            .iter()
+            .map(|name| format!("{}.{}", prefix, name))
+            .collect();
+        DerivedFieldNameVec(derived_names)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &'static &'static str> {
+        self.0.iter()
+    }
+
+    pub fn iter_copied(&self) -> impl Iterator<Item = &'static str> {
+        self.0.iter().copied()
+    }
+}
+
+impl DerivedFieldNameVec {
+    pub fn add_prefix(&self, prefix: &str) -> DerivedFieldNameVec {
+        let derived_names = self
+            .0
+            .iter()
+            .map(|name| format!("{}.{}", prefix, name))
+            .collect();
+        DerivedFieldNameVec(derived_names)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &String> {
+        self.0.iter()
+    }
+
+    pub fn iter_cloned(&self) -> impl Iterator<Item = String> {
+        self.0.iter().cloned()
+    }
+}
+
+impl IntoIterator for DerivedFieldNameVec {
+    type Item = String;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
 
 #[derive(Debug, Error)]
 #[cfg_attr(feature = "serde", serde_with::serde_as)]
@@ -135,6 +214,19 @@ impl IntoIterator for FieldVec {
     }
 }
 
+impl IntoIterator for DerivedFieldVec {
+    type Item = SimpleExpr;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0
+            .into_iter()
+            .map(|field| field.value)
+            .collect::<Vec<_>>()
+            .into_iter()
+    }
+}
+
 impl Field {
     pub fn new<T: TryIntoExpr>(name: &'static str, value: T) -> Result<Self, TryIntoExprError> {
         Ok(Self {
@@ -174,15 +266,26 @@ impl BindContext for UpdateStatement {
 
 #[cfg(test)]
 mod tests {
-    use crate::{self as sqlbindable, BindContext, HasFields};
-    use sea_query::PostgresQueryBuilder;
-    use sqlbindable_macros::Fields;
+    use std::marker::PhantomData;
 
-    #[derive(Clone, Fields)]
+    use crate::{self as sqlbindable, BindContext, HasFieldNames, HasFields};
+    use sea_query::PostgresQueryBuilder;
+    use sqlbindable_macros::{FieldNames, Fields};
+
+    #[derive(Clone, FieldNames, Fields)]
     pub struct Test {
         x: i32,
         y: Option<i32>,
         z: Option<f32>,
+    }
+
+    // generic (lifetimes, type params) fields are currently unsupported
+    #[derive(Clone, FieldNames)]
+    #[allow(dead_code)]
+    pub struct TestNameOnly {
+        x: i32,
+        y: PhantomData<*const u8>,
+        z: Vec<[std::sync::Arc<f32>; 1024]>,
     }
 
     #[test]
@@ -209,5 +312,16 @@ mod tests {
             query.to_string(PostgresQueryBuilder),
             r#"UPDATE "test" SET "x" = 1, "y" = 2"#
         );
+    }
+
+    #[test]
+    fn test_field_names() {
+        let field_names = TestNameOnly::field_names();
+        let names: Vec<&'static str> = field_names.iter_copied().collect();
+        assert_eq!(names, vec!["x", "y", "z"]);
+
+        let prefixed_field_names = field_names.add_prefix("prefix");
+        let prefixed_names: Vec<String> = prefixed_field_names.iter_cloned().collect();
+        assert_eq!(prefixed_names, vec!["prefix.x", "prefix.y", "prefix.z"]);
     }
 }

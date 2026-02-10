@@ -15,7 +15,7 @@ use governor::{DefaultKeyedRateLimiter, Quota, RateLimiter};
 use nonzero_ext::nonzero;
 use nrs_webapp_frontend::{maybe_document, views::pages::auth::confirm_email::confirm_mail};
 use serde::Deserialize;
-use sqlbindable::Fields;
+use sqlbindable::{FieldNames, Fields};
 use sqlx::prelude::FromRow;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -237,7 +237,7 @@ async fn send_confirm_mail(
     }
 }
 
-#[derive(Debug, FromRow, Fields)]
+#[derive(Debug, FromRow, FieldNames, Fields)]
 struct UserIdEmail {
     id: Uuid,
     email: String,

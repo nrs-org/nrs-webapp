@@ -2,6 +2,7 @@
 mod dev;
 
 mod auth;
+mod entry;
 mod fallback;
 mod static_serve;
 
@@ -49,6 +50,7 @@ pub fn router(mm: ModelManager) -> Router<ModelManager> {
     let mut router = Router::<ModelManager>::new()
         .route("/", get(home))
         .nest("/auth", auth::router())
+        .nest("/entry", entry::router())
         .fallback(fallback_handler)
         .method_not_allowed_fallback(method_not_allowed_fallback_handler)
         .layer(axum::middleware::map_response(mw_res_mapper))
