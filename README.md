@@ -65,3 +65,21 @@ Here are four tasks to run during development:
   code.
 - `pnpm --prefix nrs-webapp-frontend tailwind`: run Tailwind CSS in watch mode
   for frontend styles.
+
+## CI and Coverage
+
+The project uses GitHub Actions for continuous integration, which includes:
+
+- **Code checking** with `cargo check`
+- **Testing** with `cargo test`
+- **Formatting** validation with `cargo fmt`
+- **Linting** with `cargo clippy`
+- **Coverage** measurement with `cargo-llvm-cov`
+
+Coverage reports are automatically uploaded to [Codecov](https://codecov.io) for
+tracking and visualization.
+
+> [!NOTE]
+> For the coverage upload to work in CI, a `CODECOV_TOKEN` secret needs to be
+> configured in the repository settings. This token can be obtained from
+> [codecov.io](https://codecov.io) after setting up the repository integration.
